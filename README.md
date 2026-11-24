@@ -10,18 +10,28 @@
 
 ---
 
-## 🎯 Problem Statement (Technical Note)
+## 🎯 Problem Statement & Proposal
 
-> *For the in-depth technical analysis, see [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).*
+> 📑 **Read the complete docs**: [Full Project Proposal (PROPOSAL.md)](PROPOSAL.md) • [Technical Note (TECHNICAL_NOTE.md)](TECHNICAL_NOTE.md)
 
-Conventional public transit journey planners (e.g., Google Maps) optimize strictly for **shortest path or shortest theoretical duration**, implicitly assuming infinite vehicle capacity and uniform passenger comfort.
+### 1. Problem We Chose
+Conventional public transit journey planners (e.g., Google Maps) optimize strictly for **shortest path or theoretical duration**, implicitly assuming infinite vehicle capacity and uniform passenger comfort.
 
-In metropolitan transit networks like Delhi (DTC/DIMTS), where over **4 million passenger trips occur daily**, this assumption fails commuters in three critical ways:
-1. **Pass-By Delays at Peak Hours**: Buses operating along major corridors reach $150\%\text{--}200\%$ rated capacity between 08:00–10:00 and 17:00–20:00, repeatedly passing by commuters waiting at downstream stops.
-2. **Passenger Information Asymmetry**: Commuters have zero visibility into whether an incoming bus is crush-loaded, or whether an alternative route departing 10 minutes later offers a seated, comfortable journey.
-3. **Unbalanced Transit Network Load**: Without density visibility, passenger demand remains heavily concentrated on a handful of well-known corridors while parallel routes run under-utilized.
+In Delhi (DTC/DIMTS), where over **4 million passenger trips occur daily**, this causes severe real-world failures:
+* **The "Full Bus" Pass-By**: Buses reach $150\%\text{--}200\%$ capacity during morning ($08:00\text{--}10:00$) and evening ($17:00\text{--}20:00$) surges, skipping intermediate stops and stranding commuters.
+* **Information Asymmetry**: Commuters cannot see whether an approaching bus is crush-loaded, missing calmer alternative buses departing just 10–15 minutes apart.
+* **Network-Wide Overload**: Passenger demand concentrates on a few popular corridors while parallel routes run under-capacity.
 
-**CrowdWise** directly solves this by analyzing **2.56M electronic ticketing machine (ETM) records** to deliver **crowdedness-aware journey planning**, empowering riders to trade marginal travel time for comfort, seat availability, and lower transit stress.
+### 2. Our Approach
+* **Crowd-First Optimization**: Evaluates journeys on both travel duration ($T$) and crowdedness level ($C$). Users can choose between **Fastest**, **Least Crowded**, or **Balanced**.
+* **Three-Tier Crowd Badges**: Clear visual tags (🟢 Low, 🟡 Medium, 🔴 High) to immediately identify bus comfort.
+* **Smart Departure Shift**: Advises commuters when shifting departure by 15–30 minutes offers a calmer, seated ride.
+* **Multimodal Integration**: Connects bus routes with 80 Delhi Metro stations, cafes, and hospitals, showing walking minutes, calorie burn, and carbon offset.
+
+### 3. Data We Used
+* **2.56 Million ETM Records**: Electronic ticketing machine data from October 2026 across Delhi buses, used as an empirical boarding demand proxy without expensive IoT sensors.
+* **GTFS Static Transit Feeds**: 1,628 active routes, 6,762 geocoded stops, stop schedules, and route geometries.
+* **POI Geodatabase**: 141 mapped locations (80 Metro stations, 36 cafes, 25 major hospitals) with Haversine distance calculations.
 
 ---
 
