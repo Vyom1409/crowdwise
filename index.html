@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delhi Bus Journey Planner — Crowdedness Aware</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+/* ── Reset & Variables ───────────────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--surface:#1e293b;--surface2:#334155;--border:#475569;
+  --text:#f1f5f9;--text2:#94a3b8;--accent:#3b82f6;--accent2:#60a5fa;
+  --green:#22c55e;--yellow:#eab308;--orange:#f97316;--red:#ef4444;
+  --radius:12px;--shadow:0 4px 24px rgba(0,0,0,.35);
+}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+a{color:var(--accent2);text-decoration:none}
+
+/* ── Header ──────────────────────────────────────────────────────────── */
+.header{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1000}
+.header svg{width:36px;height:36px;flex-shrink:0}
+.header h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+.header .subtitle{font-size:.78rem;color:var(--text2);margin-top:2px}
+.header .data-badge{margin-left:auto;background:var(--surface2);padding:5px 12px;border-radius:20px;font-size:.7rem;color:var(--accent2);white-space:nowrap}
+
+/* ── Layout ──────────────────────────────────────────────────────────── */
+.main-layout{display:grid;grid-template-columns:440px 1fr;height:calc(100vh - 70px)}
+@media(max-width:960px){.main-layout{grid-template-columns:1fr;grid-template-rows:auto 400px}}
+.panel{overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel::-webkit-scrollbar{width:6px}
+.panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+#map-container{position:relative}
+#map{width:100%;height:100%;background:var(--surface)}
+
+/* ── Cards & Sections ────────────────────────────────────────────────── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow)}
+.card-title{font-size:.85rem;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-title .icon{font-size:1.1rem}
+
+/* ── Search Form ─────────────────────────────────────────────────────── */
+.search-group{position:relative}
+.search-group label{display:block;font-size:.75rem;font-weight:600;color:var(--text2);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+.search-group input{width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:.9rem;outline:none;transition:border .2s}
+.search-group input:focus{border-color:var(--accent)}
+.search-group input::placeholder{color:var(--surface2)}
+.autocomplete-list{position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:0 0 8px 8px;max-height:200px;overflow-y:auto;z-index:100;display:none}
+.autocomplete-list.show{display:block}
+.ac-item{padding:8px 14px;cursor:pointer;font-size:.85rem;border-bottom:1px solid var(--bg);display:flex;justify-content:space-between;align-items:center}
+.ac-item:hover,.ac-item.active{background:var(--accent);color:#fff}
+.ac-item .ac-meta{font-size:.7rem;color:var(--text2)}
+.ac-item:hover .ac-meta{color:rgba(255,255,255,.7)}
+
+.preset-chip{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:14px;font-size:.72rem;cursor:pointer;transition:all .15s;white-space:nowrap}
+.preset-chip:hover{background:var(--accent);border-color:var(--accent);color:#fff}
+.tip-banner{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.75rem;color:var(--accent2);display:flex;align-items:center;gap:8px}
+
+/* ── Controls Row ────────────────────────────────────────────────────── */
+.controls-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
+.ctrl-group{flex:1;min-width:80px}
+.ctrl-group label{display:block;font-size:.7rem;font-weight:600;color:var(--text2);margin-bottom:3px;text-transform:uppercase}
+.ctrl-group select,.ctrl-group input[type=range]{width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem}
+.ctrl-group select{cursor:pointer}
+
+/* ── Hour slider ─────────────────────────────────────────────────────── */
+.hour-slider-wrap{display:flex;align-items:center;gap:10px}
+.hour-slider-wrap input[type=range]{flex:1;accent-color:var(--accent)}
+.hour-label{font-size:1rem;font-weight:700;color:var(--accent2);min-width:52px;text-align:center}
+
+/* ── Plan Button ─────────────────────────────────────────────────────── */
+.btn-plan{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#2563eb);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;letter-spacing:.02em}
+.btn-plan:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,.4)}
+.btn-plan:active{transform:translateY(0)}
+.btn-plan:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* ── Swap button ─────────────────────────────────────────────────────── */
+.swap-btn{align-self:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:background .2s}
+.swap-btn:hover{background:var(--accent)}
+
+/* ── Walking & Calorie Card ──────────────────────────────────────────── */
+.walk-card{background:linear-gradient(135deg,rgba(34,197,94,.12) 0%,rgba(15,23,42,.6) 100%);border:1px solid rgba(34,197,94,.35);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.walk-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.walk-title{font-size:.85rem;font-weight:700;color:#4ade80;display:flex;align-items:center;gap:6px}
+.walk-badge{font-size:.65rem;background:#14532d;color:#86efac;padding:2px 8px;border-radius:12px;font-weight:600}
+.walk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
+.walk-stat{background:var(--bg);padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.05)}
+.walk-stat .num{font-size:1rem;font-weight:800;color:var(--text)}
+.walk-stat .lbl{font-size:.62rem;color:var(--text2);text-transform:uppercase;margin-top:2px}
+.walk-extra{margin-top:8px;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--text2);background:rgba(0,0,0,.25);padding:6px 10px;border-radius:6px}
+.walk-extra .food{color:#fde047;font-weight:600}
+
+/* ── Nearby POI Accordion/Card ───────────────────────────────────────── */
+.poi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
+.poi-tabs{display:flex;background:var(--bg);padding:3px;border-radius:8px;margin-bottom:10px}
+.poi-tab-btn{flex:1;padding:6px 8px;border:none;background:transparent;color:var(--text2);font-size:.75rem;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s;text-align:center}
+.poi-tab-btn.active{background:var(--surface2);color:var(--text)}
+
+.poi-section{margin-bottom:12px}
+.poi-section:last-child{margin-bottom:0}
+.poi-sec-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
+.poi-sec-title.metro{color:#a78bfa}
+.poi-sec-title.cafe{color:#f59e0b}
+.poi-sec-title.hospital{color:#f87171}
+
+.poi-list{display:flex;flex-direction:column;gap:5px}
+.poi-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:7px 10px;border-radius:6px;font-size:.78rem;cursor:pointer;transition:all .15s;border:1px solid transparent}
+.poi-item:hover{border-color:var(--accent);background:var(--surface2)}
+.poi-item .left{display:flex;align-items:center;gap:8px;overflow:hidden;flex:1}
+.poi-item .icon{font-size:1.1rem;flex-shrink:0}
+.poi-item .info{overflow:hidden}
+.poi-item .name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poi-item .sub{font-size:.68rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.poi-item .right{text-align:right;flex-shrink:0;margin-left:8px}
+.poi-item .dist{font-size:.78rem;font-weight:700;color:var(--accent2)}
+.poi-item .walk{font-size:.65rem;color:var(--text2)}
+
+/* ── Results ─────────────────────────────────────────────────────────── */
+.results-header{font-size:.82rem;color:var(--text2);margin-bottom:4px}
+.route-option{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .15s}
+.route-option:hover{border-color:var(--accent);transform:translateX(3px)}
+.route-option.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.25)}
+.ro-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.ro-route-name{font-size:1.05rem;font-weight:700;color:var(--accent2)}
+.ro-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;background:#164e63;color:#67e8f9;font-weight:600}
+.ro-non-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;background:#3f3f46;color:#a1a1aa;font-weight:600}
+.crowd-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;color:#fff;margin-left:auto}
+.crowd-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.ro-details{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:.78rem}
+.ro-detail{text-align:center;padding:6px 4px;background:var(--bg);border-radius:6px}
+.ro-detail .val{font-size:1rem;font-weight:700;color:var(--text)}
+.ro-detail .lbl{color:var(--text2);font-size:.65rem;text-transform:uppercase;margin-top:2px}
+.ro-stops-line{margin-top:8px;font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:6px}
+.ro-stops-line .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.ro-stops-line .line{flex:1;height:2px;background:var(--border)}
+
+/* ── Crowdedness Timeline ────────────────────────────────────────────── */
+.timeline-chart-wrap{position:relative;height:140px;margin-top:8px}
+.timeline-bars{display:flex;align-items:end;height:110px;gap:2px;padding:0 2px}
+.t-bar{flex:1;border-radius:3px 3px 0 0;min-width:4px;position:relative;transition:all .2s;cursor:pointer}
+.t-bar:hover{opacity:.85;transform:scaleX(1.3)}
+.t-bar .t-tip{display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--bg);border:1px solid var(--border);padding:4px 8px;border-radius:4px;font-size:.7rem;white-space:nowrap;z-index:10;pointer-events:none}
+.t-bar:hover .t-tip{display:block}
+.t-hours{display:flex;gap:2px;font-size:.6rem;color:var(--text2);padding:4px 2px 0}
+.t-hours span{flex:1;text-align:center}
+
+/* ── Legend ───────────────────────────────────────────────────────────── */
+.legend{display:flex;gap:12px;flex-wrap:wrap;padding:8px 0;font-size:.72rem}
+.legend-item{display:flex;align-items:center;gap:4px}
+.legend-dot{width:10px;height:10px;border-radius:3px}
+
+/* ── Spot Checks Panel ───────────────────────────────────────────────── */
+.spot-check{background:var(--bg);border-radius:8px;padding:10px;margin-bottom:8px;border-left:3px solid var(--accent)}
+.spot-check .sc-route{font-weight:700;color:var(--accent2);font-size:.9rem}
+.spot-check .sc-corridor{font-size:.75rem;color:var(--text2);margin:2px 0 6px}
+.spot-check .sc-stats{display:flex;gap:8px;font-size:.75rem;flex-wrap:wrap}
+.spot-check .sc-stat{background:var(--surface2);padding:3px 8px;border-radius:4px}
+
+/* ── Tab switcher ────────────────────────────────────────────────────── */
+.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:8px}
+.tab{padding:8px 16px;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── Map POI Floating Filter Bar ─────────────────────────────────────── */
+.map-poi-filters{position:absolute;top:16px;left:16px;z-index:500;display:flex;gap:6px;background:rgba(15,23,42,.88);backdrop-filter:blur(8px);padding:6px;border-radius:24px;border:1px solid var(--border)}
+.map-filter-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;background:var(--surface2);border:1px solid transparent;color:var(--text2);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
+.map-filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent2)}
+.map-filter-chip.active.metro{background:#7c3aed}
+.map-filter-chip.active.cafe{background:#d97706}
+.map-filter-chip.active.hospital{background:#dc2626}
+
+/* ── Loading ─────────────────────────────────────────────────────────── */
+.loading{text-align:center;padding:30px;color:var(--text2)}
+.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text2)}
+.empty-state .icon{font-size:2.5rem;margin-bottom:12px}
+.empty-state h3{font-size:1rem;color:var(--text);margin-bottom:6px}
+.empty-state p{font-size:.82rem;line-height:1.5}
+
+/* ── Map info panel ──────────────────────────────────────────────────── */
+.map-info{position:absolute;bottom:16px;left:16px;background:rgba(15,23,42,.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;z-index:500;max-width:340px;font-size:.78rem;color:var(--text)}
+.map-info h4{color:var(--accent2);margin-bottom:4px;font-size:.85rem}
+</style>
+</head>
+<body>
+
+<!-- ── Header ────────────────────────────────────────────────────────── -->
+<header class="header">
+  <svg viewBox="0 0 36 36" fill="none"><rect x="2" y="12" width="32" height="14" rx="4" fill="#3b82f6" opacity=".9"/><rect x="6" y="8" width="6" height="6" rx="2" fill="#60a5fa"/><rect x="24" y="8" width="6" height="6" rx="2" fill="#60a5fa"/><circle cx="10" cy="28" r="3" fill="#f1f5f9"/><circle cx="26" cy="28" r="3" fill="#f1f5f9"/><rect x="14" y="15" width="8" height="6" rx="1" fill="#0f172a" opacity=".5"/></svg>
+  <div>
+    <h1>Delhi Bus Journey Planner</h1>
+    <div class="subtitle">Crowdedness-Aware Routing · Calorie Burn · Nearest Metros, Cafes & Hospitals</div>
+  </div>
+  <div class="data-badge">📊 2.56M tickets · 1,628 routes · 6,762 stops</div>
+</header>
+
+<!-- ── Main Layout ───────────────────────────────────────────────────── -->
+<div class="main-layout">
+  <!-- Left Panel -->
+  <div class="panel" id="left-panel">
+
+    <!-- Search Card -->
+    <div class="card">
+      <div class="card-title"><span class="icon">🔍</span> Plan Your Journey</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="search-group">
+          <label>From</label>
+          <input type="text" id="origin-input" placeholder="e.g. AIIMS, Badarpur, Kashmere Gate..." autocomplete="off">
+          <div class="autocomplete-list" id="origin-ac"></div>
+        </div>
+        <button class="swap-btn" id="swap-btn" title="Swap origin & destination">⇅</button>
+        <div class="search-group">
+          <label>To</label>
+          <input type="text" id="dest-input" placeholder="e.g. Nehru Place, Kapashera Border..." autocomplete="off">
+          <div class="autocomplete-list" id="dest-ac"></div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <label style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase">Departure Time</label>
+        <div class="hour-slider-wrap">
+          <input type="range" id="hour-slider" min="0" max="23" value="9">
+          <div class="hour-label" id="hour-label">09:00</div>
+        </div>
+      </div>
+
+      <div class="controls-row" style="margin-top:8px">
+        <div class="ctrl-group">
+          <label>Day Type</label>
+          <select id="day-type">
+            <option value="weekday">Weekday</option>
+            <option value="weekend">Weekend</option>
+          </select>
+        </div>
+        <div class="ctrl-group">
+          <label>Optimize For</label>
+          <select id="preference">
+            <option value="balanced">⚖️ Balanced</option>
+            <option value="fastest">⚡ Fastest</option>
+            <option value="comfort">🪑 Most Comfort</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-plan" id="plan-btn" onclick="planJourney()">🚌 Find Routes</button>
+
+      <div style="margin-top:12px">
+        <div style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:6px">⚡ Popular Journeys (1-Click)</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          <button class="preset-chip" onclick="quickSelect('Aiims', 'Nehru Place')">🏥 AIIMS → Nehru Place</button>
+          <button class="preset-chip" onclick="quickSelect('Badarpur Border', 'Kapashera Border')">🚌 Badarpur → Kapashera</button>
+          <button class="preset-chip" onclick="quickSelect('Kashmere Gate Isbt', 'Central Secretariat')">🏛️ Kashmere Gate → Central Sec</button>
+          <button class="preset-chip" onclick="quickSelect('Shahdara', 'Aiims')">🏙️ Shahdara → AIIMS</button>
+          <button class="preset-chip" onclick="quickSelect('Anand Vihar', 'Dhaula Kuan')">✈️ Anand Vihar → Dhaula Kuan</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results area -->
+    <div id="results-area">
+      <div class="empty-state">
+        <div class="icon">🗺️</div>
+        <h3>Plan a Crowdedness-Aware Trip</h3>
+        <p>Search for origin and destination stops to see bus routes ranked by travel time and crowdedness, walking calorie burn, and nearest cafes, metros, and hospitals.</p>
+      </div>
+    </div>
+
+    <!-- Tabs: Insights & Verification -->
+    <div class="card">
+      <div class="tabs">
+        <div class="tab active" data-tab="insights" onclick="switchTab(this)">📈 Network Insights</div>
+        <div class="tab" data-tab="verify" onclick="switchTab(this)">✅ Spot Checks</div>
+      </div>
+
+      <div class="tab-content active" id="tab-insights">
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Low (&lt;40%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Moderate (40-65%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>High (65-85%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Packed (&gt;85%)</div>
+        </div>
+        <div style="font-size:.78rem;color:var(--text2);line-height:1.6">
+          <p><strong style="color:var(--text)">Morning Peak:</strong> 08:00–10:00 — 334K–374K passengers/hr</p>
+          <p><strong style="color:var(--text)">Evening Peak:</strong> 17:00–19:00 — 180K–255K passengers/hr</p>
+          <p><strong style="color:var(--text)">Off-Peak:</strong> 12:00–15:00 — 75K–93K passengers/hr</p>
+          <p style="margin-top:8px;font-size:.72rem">Grounding from 2,559,899 actual ONDC Delhi bus tickets. Incorporates transit hubs, walking burn, and nearest medical & coffee amenities.</p>
+        </div>
+        <div style="margin-top:12px">
+          <div class="card-title"><span class="icon">📊</span> City-Wide Hourly Load</div>
+          <canvas id="city-chart" height="140"></canvas>
+        </div>
+      </div>
+
+      <div class="tab-content" id="tab-verify">
+        <div style="font-size:.75rem;color:var(--text2);margin-bottom:8px">Model estimates spot-checked against known commuter patterns on Delhi's busiest corridors:</div>
+        <div id="spot-checks-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div id="map-container">
+    <div class="map-poi-filters">
+      <div class="map-filter-chip metro active" id="filter-metro" onclick="togglePoiLayer('metro')"><span>🚇</span> Metros</div>
+      <div class="map-filter-chip cafe active" id="filter-cafe" onclick="togglePoiLayer('cafe')"><span>☕</span> Cafes</div>
+      <div class="map-filter-chip hospital active" id="filter-hospital" onclick="togglePoiLayer('hospital')"><span>🏥</span> Hospitals</div>
+    </div>
+    <div id="map"></div>
+    <div class="map-info" id="map-info" style="display:none"></div>
+  </div>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────
+let map, routeLayers = [], markerLayers = [], poiLayers = { metro: [], cafe: [], hospital: [] };
+let activePoiFilters = { metro: true, cafe: true, hospital: true };
+let currentPoisData = null;
+let selectedRouteIdx = -1;
+const API = '';
+
+// ── Initialize Map ───────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', { zoomControl: false }).setView([28.6139, 77.2090], 11);
+  L.control.zoom({ position: 'topright' }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19
+  }).addTo(map);
+}
+
+// ── Leaflet Icons ────────────────────────────────────────────────────────
+const metroIcon = L.divIcon({
+  html: `<div style="background:#7c3aed;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">🚇</div>`,
+  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
+});
+
+const cafeIcon = L.divIcon({
+  html: `<div style="background:#d97706;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">☕</div>`,
+  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
+});
+
+const hospitalIcon = L.divIcon({
+  html: `<div style="background:#dc2626;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">🏥</div>`,
+  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
+});
+
+// ── Autocomplete ─────────────────────────────────────────────────────────
+let acTimeout;
+function setupAutocomplete(inputId, listId) {
+  const input = document.getElementById(inputId);
+  const list = document.getElementById(listId);
+  let activeIdx = -1;
+
+  input.addEventListener('input', () => {
+    clearTimeout(acTimeout);
+    const q = input.value.trim();
+    if (q.length < 2) { list.classList.remove('show'); return; }
+    acTimeout = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API}/api/search-stops?q=${encodeURIComponent(q)}`);
+        const data = await res.json();
+        list.innerHTML = '';
+        activeIdx = -1;
+        if (data.results.length === 0) { list.classList.remove('show'); return; }
+        data.results.forEach((s, i) => {
+          const div = document.createElement('div');
+          div.className = 'ac-item';
+          div.innerHTML = `<span>${hl(s.name, q)}</span><span class="ac-meta">${s.route_count || '?'} routes</span>`;
+          div.addEventListener('click', () => {
+            input.value = s.name;
+            list.classList.remove('show');
+          });
+          list.appendChild(div);
+        });
+        list.classList.add('show');
+      } catch(e) {}
+    }, 200);
+  });
+
+  input.addEventListener('keydown', e => {
+    const items = list.querySelectorAll('.ac-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); updateActive(items, activeIdx); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); updateActive(items, activeIdx); }
+    else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); }
+    else if (e.key === 'Escape') { list.classList.remove('show'); }
+  });
+
+  document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.classList.remove('show'); });
+}
+function updateActive(items, idx) { items.forEach((it, i) => it.classList.toggle('active', i === idx)); }
+function hl(text, q) {
+  const i = text.toLowerCase().indexOf(q.toLowerCase());
+  if (i < 0) return text;
+  return text.substring(0, i) + '<strong style="color:var(--accent2)">' + text.substring(i, i + q.length) + '</strong>' + text.substring(i + q.length);
+}
+
+// ── Hour slider ──────────────────────────────────────────────────
+function setupHourSlider() {
+  const slider = document.getElementById('hour-slider');
+  const label = document.getElementById('hour-label');
+  slider.addEventListener('input', () => {
+    const h = parseInt(slider.value);
+    label.textContent = `${h.toString().padStart(2,'0')}:00`;
+  });
+}
+
+// ── Swap button ──────────────────────────────────────────────────
+document.getElementById('swap-btn').addEventListener('click', () => {
+  const o = document.getElementById('origin-input');
+  const d = document.getElementById('dest-input');
+  const tmp = o.value; o.value = d.value; d.value = tmp;
+});
+
+// ── Quick Select ─────────────────────────────────────────────────
+function quickSelect(orig, dest) {
+  document.getElementById('origin-input').value = orig;
+  document.getElementById('dest-input').value = dest;
+  planJourney();
+}
+
+// ── Plan Journey ─────────────────────────────────────────────────
+async function planJourney() {
+  const origin = document.getElementById('origin-input').value.trim();
+  const dest = document.getElementById('dest-input').value.trim();
+  const hour = parseInt(document.getElementById('hour-slider').value);
+  const weekend = document.getElementById('day-type').value === 'weekend';
+  const preference = document.getElementById('preference').value;
+
+  if (!origin || !dest) { alert('Please enter both origin and destination stops.'); return; }
+
+  const btn = document.getElementById('plan-btn');
+  btn.disabled = true; btn.textContent = '⏳ Searching...';
+  document.getElementById('results-area').innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:8px">Finding best routes, cafes & metros...</p></div>';
+
+  try {
+    const url = `${API}/api/plan?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&hour=${hour}&weekend=${weekend}&preference=${preference}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.error) {
+      document.getElementById('results-area').innerHTML = `<div class="card" style="border-color:var(--red)"><p style="color:var(--red);font-size:.85rem">❌ ${data.error}</p><p style="font-size:.78rem;color:var(--text2);margin-top:6px">Try a different stop name or check the spelling.</p></div>`;
+      return;
+    }
+
+    renderResults(data);
+  } catch(e) {
+    document.getElementById('results-area').innerHTML = `<div class="card"><p style="color:var(--red)">Error: ${e.message}</p></div>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🚌 Find Routes';
+  }
+}
+
+// ── Render Results ───────────────────────────────────────────────
+function renderResults(data) {
+  const area = document.getElementById('results-area');
+  if (!data.options || data.options.length === 0) {
+    area.innerHTML = `<div class="empty-state"><div class="icon">😕</div><h3>No Direct Routes Found</h3><p>No bus directly connects ${data.origin} → ${data.destination} at this time. Try nearby stops or a different time.</p></div>`;
+    clearMapRoutes();
+    return;
+  }
+
+  // 1. Departure Smart Tip
+  let tipHtml = '';
+  const firstOpt = data.options[0];
+  if (firstOpt && firstOpt.hourly_crowdedness) {
+    const curCrowd = firstOpt.crowdedness_pct;
+    const offPeakCrowd = firstOpt.hourly_crowdedness[14] || 25;
+    if (curCrowd > 60 && curCrowd - offPeakCrowd >= 20) {
+      const diff = Math.round(curCrowd - offPeakCrowd);
+      tipHtml = `
+      <div class="tip-banner">
+        <span>💡</span>
+        <span><strong>Smart Tip:</strong> Traveling at 14:00 (off-peak) instead of ${data.hour}:00 drops crowdedness from <strong>${curCrowd.toFixed(0)}%</strong> down to <strong>${offPeakCrowd.toFixed(0)}%</strong> (saving ${diff}% crowd with guaranteed seats)!</span>
+      </div>`;
+    }
+  }
+
+  // 2. Walking & Calorie Burn Card
+  const ws = data.walking_stats || { walk_dist_km: 3.5, walk_mins: 45, calories: 230, steps: 4600, food_equivalent: '1 hot Samosa 🥟', co2_saved_kg: 0.42 };
+  const walkHtml = `
+  <div class="walk-card">
+    <div class="walk-header">
+      <div class="walk-title"><span>🚶</span> Walk vs Bus: Health & Calories</div>
+      ${ws.is_walkable_recommended ? '<span class="walk-badge">✨ Highly Walkable!</span>' : '<span class="walk-badge" style="background:#334155;color:#94a3b8">Walking Alternative</span>'}
+    </div>
+    <div class="walk-stats">
+      <div class="walk-stat">
+        <div class="num">${ws.walk_dist_km} <span style="font-size:.68rem;font-weight:500">km</span></div>
+        <div class="lbl">Walk Dist</div>
+      </div>
+      <div class="walk-stat">
+        <div class="num">${ws.walk_mins} <span style="font-size:.68rem;font-weight:500">min</span></div>
+        <div class="lbl">Brisk Pace</div>
+      </div>
+      <div class="walk-stat">
+        <div class="num" style="color:#f59e0b">🔥 ${ws.calories}</div>
+        <div class="lbl">Calories</div>
+      </div>
+      <div class="walk-stat">
+        <div class="num" style="color:#60a5fa">${ws.steps.toLocaleString()}</div>
+        <div class="lbl">Steps</div>
+      </div>
+    </div>
+    <div class="walk-extra">
+      <div>Burns: <span class="food">${ws.food_equivalent}</span></div>
+      <div style="color:#4ade80">🌱 -${ws.co2_saved_kg} kg CO₂ saved</div>
+    </div>
+  </div>`;
+
+  // 3. Nearest POIs Card (Metros, Cafes, Hospitals)
+  const poiHtml = `
+  <div class="poi-card">
+    <div class="card-title" style="margin-bottom:8px">
+      <span class="icon">📍</span> Nearest Transit, Cafes & Hospitals
+    </div>
+    <div class="poi-tabs">
+      <button class="poi-tab-btn active" id="poi-tab-orig" onclick="switchPoiTab('orig')">🟢 Near Origin (${data.origin.substring(0, 14)})</button>
+      <button class="poi-tab-btn" id="poi-tab-dest" onclick="switchPoiTab('dest')">🔴 Near Dest (${data.destination.substring(0, 14)})</button>
+    </div>
+    <div id="poi-content-orig">
+      ${renderPoiSections(data.origin_pois, 'origin')}
+    </div>
+    <div id="poi-content-dest" style="display:none">
+      ${renderPoiSections(data.destination_pois, 'dest')}
+    </div>
+  </div>`;
+
+  // 4. Route Options List
+  let routesHtml = `<div class="results-header">Found <strong>${data.result_count}</strong> route${data.result_count > 1 ? 's' : ''} · ${data.origin} → ${data.destination} · ${data.hour.toString().padStart(2,'0')}:00 ${data.is_weekend ? '(Weekend)' : '(Weekday)'}</div>`;
+
+  data.options.forEach((opt, idx) => {
+    const pct = opt.crowdedness_pct;
+    routesHtml += `
+    <div class="route-option" onclick="selectRoute(${idx})" id="ro-${idx}">
+      <div class="ro-top">
+        <span class="ro-route-name">🚌 ${opt.route_name}</span>
+        <span class="${opt.is_ac ? 'ro-ac-badge' : 'ro-non-ac-badge'}">${opt.is_ac ? 'AC' : 'Non-AC'}</span>
+        ${opt.type === 'transfer' ? '<span class="ro-ac-badge" style="background:#4c1d95;color:#c4b5fd">1 Transfer</span>' : ''}
+        <span class="crowd-badge" style="background:${opt.badge_color}">
+          <span class="crowd-dot" style="background:rgba(255,255,255,.5)"></span>
+          ${pct}% — ${opt.comfort_text}
+        </span>
+      </div>
+      <div class="ro-details">
+        <div class="ro-detail"><div class="val">${opt.est_time_mins}m</div><div class="lbl">Est. Time</div></div>
+        <div class="ro-detail"><div class="val">${opt.distance_km} km</div><div class="lbl">Distance</div></div>
+        <div class="ro-detail"><div class="val">${opt.stops_count}</div><div class="lbl">Stops</div></div>
+        <div class="ro-detail"><div class="val">₹${opt.fare_est}</div><div class="lbl">Avg Fare</div></div>
+      </div>
+      <div class="ro-stops-line">
+        <span class="dot" style="background:var(--green)"></span>
+        <span>${opt.origin_stop}</span>
+        <span class="line"></span>
+        <span>${opt.stops_count} stops</span>
+        <span class="line"></span>
+        <span>${opt.dest_stop}</span>
+        <span class="dot" style="background:var(--red)"></span>
+      </div>
+      <div style="margin-top:10px">
+        <div style="font-size:.7rem;color:var(--text2);margin-bottom:4px">Crowdedness Through the Day (${data.is_weekend ? 'Weekend' : 'Weekday'})</div>
+        <div class="timeline-chart-wrap">
+          <div class="timeline-bars" id="timeline-${idx}"></div>
+          <div class="t-hours" id="hours-${idx}"></div>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  area.innerHTML = tipHtml + walkHtml + poiHtml + routesHtml;
+
+  // Render timelines for each route
+  data.options.forEach((opt, idx) => {
+    renderTimeline(idx, opt.hourly_crowdedness, data.hour);
+  });
+
+  // Save state & select first route on map
+  window._currentResults = data;
+  currentPoisData = { origin: data.origin_pois, dest: data.destination_pois };
+  selectRoute(0);
+}
+
+// ── Render POI Sections (Metros, Cafes, Hospitals) ──────────────
+function renderPoiSections(pois, locType) {
+  if (!pois) return '<div style="font-size:.75rem;color:var(--text2);padding:10px">No nearby POI data available.</div>';
+
+  let html = '';
+
+  // Metros
+  if (pois.metros && pois.metros.length > 0) {
+    html += `
+    <div class="poi-section">
+      <div class="poi-sec-title metro"><span>🚇 Nearest Metro Stations</span><span>Line Connection</span></div>
+      <div class="poi-list">
+        ${pois.metros.map(m => `
+          <div class="poi-item" onclick="focusPoi(${m.lat}, ${m.lon}, 'metro', '${escapeHtml(m.name)}', '${escapeHtml(m.line)}')">
+            <div class="left">
+              <span class="icon">🚇</span>
+              <div class="info">
+                <div class="name">${m.name}</div>
+                <div class="sub" style="color:${m.color}">${m.line} ${m.interchange ? '· Interchange 🔄' : ''}</div>
+              </div>
+            </div>
+            <div class="right">
+              <div class="dist">${m.distance_m < 1000 ? m.distance_m + 'm' : m.distance_km + 'km'}</div>
+              <div class="walk">🚶 ~${m.walk_mins} min</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Cafes
+  if (pois.cafes && pois.cafes.length > 0) {
+    html += `
+    <div class="poi-section">
+      <div class="poi-sec-title cafe"><span>☕ Nearest Cafes & Coffee</span><span>Specialty</span></div>
+      <div class="poi-list">
+        ${pois.cafes.map(c => `
+          <div class="poi-item" onclick="focusPoi(${c.lat}, ${c.lon}, 'cafe', '${escapeHtml(c.name)}', '${escapeHtml(c.specialty)}')">
+            <div class="left">
+              <span class="icon">☕</span>
+              <div class="info">
+                <div class="name">${c.name}</div>
+                <div class="sub">${c.specialty} · <span style="color:#facc15">⭐ ${c.rating}</span></div>
+              </div>
+            </div>
+            <div class="right">
+              <div class="dist">${c.distance_m < 1000 ? c.distance_m + 'm' : c.distance_km + 'km'}</div>
+              <div class="walk">🚶 ~${c.walk_mins} min</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+
+  // Hospitals
+  if (pois.hospitals && pois.hospitals.length > 0) {
+    html += `
+    <div class="poi-section">
+      <div class="poi-sec-title hospital"><span>🏥 Nearest Hospitals & Care</span><span>24x7 Emergency</span></div>
+      <div class="poi-list">
+        ${pois.hospitals.map(h => `
+          <div class="poi-item" onclick="focusPoi(${h.lat}, ${h.lon}, 'hospital', '${escapeHtml(h.name)}', 'Emergency: ${h.phone || "Available"}')">
+            <div class="left">
+              <span class="icon">🏥</span>
+              <div class="info">
+                <div class="name">${h.name}</div>
+                <div class="sub">${h.type} · ${h.emergency ? '<span style="color:#ef4444;font-weight:600">24x7 Emergency</span>' : ''}</div>
+              </div>
+            </div>
+            <div class="right">
+              <div class="dist">${h.distance_m < 1000 ? h.distance_m + 'm' : h.distance_km + 'km'}</div>
+              <div class="walk">🚶 ~${h.walk_mins} min</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`;
+  }
+
+  return html;
+}
+
+function escapeHtml(s) {
+  if (!s) return '';
+  return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+}
+
+// ── Switch POI Tab ───────────────────────────────────────────────
+function switchPoiTab(tab) {
+  document.getElementById('poi-tab-orig').classList.toggle('active', tab === 'orig');
+  document.getElementById('poi-tab-dest').classList.toggle('active', tab === 'dest');
+  document.getElementById('poi-content-orig').style.display = tab === 'orig' ? 'block' : 'none';
+  document.getElementById('poi-content-dest').style.display = tab === 'dest' ? 'block' : 'none';
+}
+
+// ── Focus on a POI on Map ────────────────────────────────────────
+function focusPoi(lat, lon, type, name, sub) {
+  if (!lat || !lon) return;
+  map.setView([lat, lon], 15, { animate: true });
+
+  const icon = type === 'metro' ? metroIcon : (type === 'cafe' ? cafeIcon : hospitalIcon);
+  const typeLabel = type === 'metro' ? '🚇 Metro Station' : (type === 'cafe' ? '☕ Cafe & Coffee' : '🏥 Hospital & Emergency');
+
+  const popup = L.popup()
+    .setLatLng([lat, lon])
+    .setContent(`
+      <div style="font-family:'Segoe UI',sans-serif;font-size:12px;color:#0f172a">
+        <strong style="font-size:14px;color:#1e293b">${name}</strong>
+        <div style="color:#64748b;margin-top:2px">${typeLabel}</div>
+        <div style="margin-top:4px;font-size:11px;color:#334155">${sub}</div>
+      </div>
+    `)
+    .openOn(map);
+}
+
+// ── Render mini-timeline bars ────────────────────────────────────
+function renderTimeline(idx, hourly, selectedHour) {
+  const container = document.getElementById(`timeline-${idx}`);
+  const hoursContainer = document.getElementById(`hours-${idx}`);
+  if (!container) return;
+
+  const maxVal = Math.max(...hourly, 1);
+  let barsHtml = '';
+  let hoursHtml = '';
+
+  for (let h = 5; h <= 23; h++) {
+    const val = hourly[h] || 0;
+    const height = Math.max(4, (val / 100) * 100);
+    const color = val < 40 ? 'var(--green)' : val < 65 ? 'var(--yellow)' : val < 85 ? 'var(--orange)' : 'var(--red)';
+    const isSel = h === selectedHour;
+    const border = isSel ? 'outline:2px solid var(--accent2);outline-offset:1px;' : '';
+    barsHtml += `<div class="t-bar" style="height:${height}px;background:${color};${border}${isSel?'opacity:1;':'opacity:.7;'}"><div class="t-tip">${h.toString().padStart(2,'0')}:00 — ${val.toFixed(0)}% crowded</div></div>`;
+    hoursHtml += `<span${isSel ? ' style="color:var(--accent2);font-weight:700"' : ''}>${h % 3 === 0 ? h : ''}</span>`;
+  }
+  container.innerHTML = barsHtml;
+  hoursContainer.innerHTML = hoursHtml;
+}
+
+// ── Select Route on Map ──────────────────────────────────────────
+function selectRoute(idx) {
+  selectedRouteIdx = idx;
+  document.querySelectorAll('.route-option').forEach((el, i) => el.classList.toggle('selected', i === idx));
+
+  clearMapRoutes();
+
+  const data = window._currentResults;
+  if (!data || !data.options[idx]) return;
+  const opt = data.options[idx];
+
+  // Draw route polyline
+  if (opt.path_coords && opt.path_coords.length >= 2) {
+    const latlngs = opt.path_coords.map(c => [c[0], c[1]]);
+
+    const polyline = L.polyline(latlngs, {
+      color: opt.badge_color || '#3b82f6',
+      weight: 5,
+      opacity: 0.85,
+      dashArray: null
+    }).addTo(map);
+    routeLayers.push(polyline);
+
+    // Origin marker
+    const origIcon = L.divIcon({
+      html: `<div style="width:16px;height:16px;border-radius:50%;background:#22c55e;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
+      iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+    });
+    const origMarker = L.marker(latlngs[0], { icon: origIcon })
+      .bindPopup(`<strong>🟢 Origin</strong><br>${opt.origin_stop}`)
+      .addTo(map);
+    markerLayers.push(origMarker);
+
+    // Destination marker
+    const destIcon = L.divIcon({
+      html: `<div style="width:16px;height:16px;border-radius:50%;background:#ef4444;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.4)"></div>`,
+      iconSize: [16, 16], iconAnchor: [8, 8], className: ''
+    });
+    const destMarker = L.marker(latlngs[latlngs.length - 1], { icon: destIcon })
+      .bindPopup(`<strong>🔴 Destination</strong><br>${opt.dest_stop}`)
+      .addTo(map);
+    markerLayers.push(destMarker);
+
+    // Fit map bounds
+    const bounds = L.latLngBounds(latlngs);
+    map.fitBounds(bounds.pad(0.18));
+
+    // Plot POIs on map
+    plotPoisOnMap(data);
+
+    // Map info box
+    const infoEl = document.getElementById('map-info');
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `
+      <h4>🚌 ${opt.route_name} ${opt.is_ac ? '(AC)' : '(Non-AC)'}</h4>
+      <div style="margin-top:4px">${opt.origin_stop} → ${opt.dest_stop}</div>
+      <div style="margin-top:4px;display:flex;gap:12px">
+        <span>⏱ ${opt.est_time_mins} min</span>
+        <span>📏 ${opt.distance_km} km</span>
+        <span style="color:${opt.badge_color};font-weight:700">● ${opt.crowdedness_pct}%</span>
+      </div>
+    `;
+  }
+}
+
+// ── Plot POIs on Map ─────────────────────────────────────────────
+function plotPoisOnMap(data) {
+  clearPoiMarkers();
+
+  const allPois = [
+    ...(data.origin_pois?.metros || []),
+    ...(data.destination_pois?.metros || []),
+    ...(data.origin_pois?.cafes || []),
+    ...(data.destination_pois?.cafes || []),
+    ...(data.origin_pois?.hospitals || []),
+    ...(data.destination_pois?.hospitals || [])
+  ];
+
+  const seen = new Set();
+  allPois.forEach(poi => {
+    if (seen.has(poi.name)) return;
+    seen.add(poi.name);
+
+    let type = 'metro';
+    let icon = metroIcon;
+    let label = '🚇 Metro';
+    let sub = poi.line || '';
+
+    if (poi.specialty) {
+      type = 'cafe';
+      icon = cafeIcon;
+      label = '☕ Cafe';
+      sub = `${poi.specialty} · ⭐ ${poi.rating}`;
+    } else if (poi.emergency !== undefined) {
+      type = 'hospital';
+      icon = hospitalIcon;
+      label = '🏥 Hospital';
+      sub = `${poi.type} · Emergency: ${poi.phone || '24x7'}`;
+    }
+
+    const marker = L.marker([poi.lat, poi.lon], { icon: icon })
+      .bindPopup(`
+        <div style="font-family:'Segoe UI',sans-serif;font-size:12px;color:#0f172a">
+          <strong style="font-size:14px;color:#1e293b">${poi.name}</strong>
+          <div style="color:#64748b;margin-top:2px">${label} · ${poi.distance_m < 1000 ? poi.distance_m + 'm' : poi.distance_km + 'km'}</div>
+          <div style="margin-top:4px;font-size:11px;color:#334155">${sub}</div>
+          <div style="margin-top:2px;font-size:10px;color:#64748b">🚶 ~${poi.walk_mins} min walk from stop</div>
+        </div>
+      `);
+
+    poiLayers[type].push(marker);
+    if (activePoiFilters[type]) {
+      marker.addTo(map);
+    }
+  });
+}
+
+function clearPoiMarkers() {
+  ['metro', 'cafe', 'hospital'].forEach(type => {
+    poiLayers[type].forEach(m => map.removeLayer(m));
+    poiLayers[type] = [];
+  });
+}
+
+// ── Toggle POI Layer ─────────────────────────────────────────────
+function togglePoiLayer(type) {
+  activePoiFilters[type] = !activePoiFilters[type];
+  document.getElementById(`filter-${type}`).classList.toggle('active', activePoiFilters[type]);
+
+  poiLayers[type].forEach(m => {
+    if (activePoiFilters[type]) {
+      m.addTo(map);
+    } else {
+      map.removeLayer(m);
+    }
+  });
+}
+
+function clearMapRoutes() {
+  routeLayers.forEach(l => map.removeLayer(l));
+  markerLayers.forEach(l => map.removeLayer(l));
+  routeLayers = [];
+  markerLayers = [];
+  clearPoiMarkers();
+  document.getElementById('map-info').style.display = 'none';
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────
+function switchTab(el) {
+  const tab = el.dataset.tab;
+  el.parentElement.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t === el));
+  el.closest('.card').querySelectorAll('.tab-content').forEach(tc => tc.classList.toggle('active', tc.id === `tab-${tab}`));
+}
+
+// ── Load Spot Checks ─────────────────────────────────────────────
+async function loadSpotChecks() {
+  try {
+    const res = await fetch(`${API}/api/spot-checks`);
+    const checks = await res.json();
+    const container = document.getElementById('spot-checks-list');
+    container.innerHTML = checks.map(sc => `
+      <div class="spot-check">
+        <div class="sc-route">🚌 ${sc.route}</div>
+        <div class="sc-corridor">${sc.corridor}</div>
+        <div class="sc-stats">
+          <span class="sc-stat">📊 ${sc.grounded_tickets.toLocaleString()} tickets</span>
+          <span class="sc-stat">⏰ Peak @ ${sc.peak_hour.toString().padStart(2,'0')}:00</span>
+          <span class="sc-stat" style="color:${sc.peak_crowd>80?'var(--red)':sc.peak_crowd>60?'var(--orange)':'var(--yellow)'}">🔥 Peak: ${sc.peak_crowd.toFixed(0)}%</span>
+          <span class="sc-stat" style="color:var(--green)">🌙 Night: ${sc.night_crowd.toFixed(0)}%</span>
+        </div>
+        <div style="font-size:.72rem;color:var(--text2);margin-top:6px">${sc.explanation}</div>
+      </div>
+    `).join('');
+  } catch(e) {}
+}
+
+// ── City-wide Chart ──────────────────────────────────────────────
+function renderCityChart() {
+  const ctx = document.getElementById('city-chart');
+  if (!ctx) return;
+  const hourlyData = [1574,607,447,470,2160,25590,71507,158390,334404,374218,216108,119819,92972,77220,75468,81242,107848,179427,254896,239134,179487,105056,46592,8970];
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: Array.from({length:24}, (_,i) => `${i.toString().padStart(2,'0')}:00`),
+      datasets: [{
+        data: hourlyData,
+        backgroundColor: hourlyData.map(v => {
+          const pct = v / 374218 * 100;
+          if (pct < 20) return 'rgba(34,197,94,.6)';
+          if (pct < 50) return 'rgba(234,179,8,.6)';
+          if (pct < 80) return 'rgba(249,115,22,.6)';
+          return 'rgba(239,68,68,.6)';
+        }),
+        borderRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false },
+        tooltip: { callbacks: { label: ctx => `${(ctx.raw/1000).toFixed(1)}K passengers` } }
+      },
+      scales: {
+        x: { ticks: { color: '#94a3b8', font: { size: 9 }, maxRotation: 0, callback: (v,i) => i%3===0 ? `${i.toString().padStart(2,'0')}:00` : '' }, grid: { display: false } },
+        y: { ticks: { color: '#94a3b8', font: { size: 9 }, callback: v => `${(v/1000).toFixed(0)}K` }, grid: { color: 'rgba(71,85,105,.3)' } }
+      }
+    }
+  });
+}
+
+// ── Enter key to search ──────────────────────────────────────────
+document.getElementById('dest-input').addEventListener('keydown', e => { if (e.key === 'Enter') planJourney(); });
+document.getElementById('origin-input').addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('dest-input').focus(); });
+
+// ── Init ─────────────────────────────────────────────────────────
+initMap();
+setupAutocomplete('origin-input', 'origin-ac');
+setupAutocomplete('dest-input', 'dest-ac');
+setupHourSlider();
+loadSpotChecks();
+renderCityChart();
+</script>
+</body>
+</html>

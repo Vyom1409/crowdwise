@@ -1,0 +1,52 @@
+[
+  {
+    "route": "717AUP",
+    "corridor": "Badarpur Border \u2192 Mehrauli \u2192 Mahipalpur \u2192 Kapashera Border",
+    "grounded_tickets": 25947,
+    "peak_hour": 8,
+    "peak_crowd": 94.0,
+    "midday_crowd": 33.8,
+    "night_crowd": 25.7,
+    "explanation": "Major cross-city arterial linking SE Delhi with SW Delhi and Gurugram border. Heavy morning commuter surge towards Mahipalpur / Kapashera."
+  },
+  {
+    "route": "717ADOWN",
+    "corridor": "Kapashera Border \u2192 Mahipalpur \u2192 Mehrauli \u2192 Badarpur Border",
+    "grounded_tickets": 25611,
+    "peak_hour": 9,
+    "peak_crowd": 94.0,
+    "midday_crowd": 33.6,
+    "night_crowd": 42.8,
+    "explanation": "Return corridor to Badarpur. Shows strong evening return wave holding high passenger load until 21:00 (53.7 tickets/hr)."
+  },
+  {
+    "route": "511AUP",
+    "corridor": "Badarpur Border \u2192 Ashram \u2192 AIIMS \u2192 Safdarjung \u2192 Dhaula Kuan",
+    "grounded_tickets": 17506,
+    "peak_hour": 9,
+    "peak_crowd": 94.0,
+    "midday_crowd": 39.9,
+    "night_crowd": 20.8,
+    "explanation": "Ring Road medical and defense corridor. Morning rush concentrated between 08:00 and 10:00 for AIIMS and Dhaula Kuan offices."
+  },
+  {
+    "route": "433DOWN",
+    "corridor": "New Delhi Railway Station \u2192 Connaught Place \u2192 Lajpat Nagar \u2192 Badarpur",
+    "grounded_tickets": 13468,
+    "peak_hour": 9,
+    "peak_crowd": 94.0,
+    "midday_crowd": 25.3,
+    "night_crowd": 17.4,
+    "explanation": "Major radial corridor from NDLS/CP to South-East Delhi. Massive 11.1x ratio between peak morning rush (108.5 pass/hr) and midday (9.8 pass/hr)."
+  },
+  {
+    "route": "623UP",
+    "corridor": "Shahdara \u2192 Laxmi Nagar \u2192 Central Secretariat \u2192 AIIMS \u2192 Vasant Kunj",
+    "grounded_tickets": 15765,
+    "peak_hour": 9,
+    "peak_crowd": 94.0,
+    "midday_crowd": 44.3,
+    "night_crowd": 21.6,
+    "explanation": "Trans-Yamuna to South Delhi connector. High volume through ITO, Central Secretariat and AIIMS during 08:00 - 10:00."
+  }
+]

@@ -1,0 +1,55 @@
+{
+  "total_tickets_analyzed": 2559899,
+  "total_routes": 2259,
+  "modeled_routes": 1628,
+  "modeled_stops": 6762,
+  "date_range": "2026-10-01 to 2026-10-31 (Full Month of October 2026)",
+  "busiest_routes": [
+    {
+      "route": "717AUP",
+      "tickets": 25947
+    },
+    {
+      "route": "717ADOWN",
+      "tickets": 25611
+    },
+    {
+      "route": "511AUP",
+      "tickets": 17506
+    },
+    {
+      "route": "729UP",
+      "tickets": 16656
+    },
+    {
+      "route": "729DOWN",
+      "tickets": 16502
+    },
+    {
+      "route": "511ADOWN",
+      "tickets": 15766
+    },
+    {
+      "route": "623UP",
+      "tickets": 15765
+    },
+    {
+      "route": "623DOWN",
+      "tickets": 15273
+    },
+    {
+      "route": "578UP",
+      "tickets": 15168
+    },
+    {
+      "route": "717BDOWN",
+      "tickets": 15121
+    }
+  ],
+  "peak_hours": {
+    "morning_peak": "08:00 - 10:00 AM (Peak 09:00 with 374,218 tickets)",
+    "evening_peak": "17:00 - 20:00 PM (Peak 18:00 with 254,896 tickets)",
+    "off_peak_midday": "12:00 - 15:00 PM (Trough 14:00 with 75,468 tickets)",
+    "off_peak_night": "22:00 - 05:00 AM (Minimum < 500 tickets/hour)"
+  }
+}
