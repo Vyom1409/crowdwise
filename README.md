@@ -10,6 +10,21 @@
 
 ---
 
+## 🎯 Problem Statement (Technical Note)
+
+> *For the in-depth technical analysis, see [TECHNICAL_NOTE.md](TECHNICAL_NOTE.md).*
+
+Conventional public transit journey planners (e.g., Google Maps) optimize strictly for **shortest path or shortest theoretical duration**, implicitly assuming infinite vehicle capacity and uniform passenger comfort.
+
+In metropolitan transit networks like Delhi (DTC/DIMTS), where over **4 million passenger trips occur daily**, this assumption fails commuters in three critical ways:
+1. **Pass-By Delays at Peak Hours**: Buses operating along major corridors reach $150\%\text{--}200\%$ rated capacity between 08:00–10:00 and 17:00–20:00, repeatedly passing by commuters waiting at downstream stops.
+2. **Passenger Information Asymmetry**: Commuters have zero visibility into whether an incoming bus is crush-loaded, or whether an alternative route departing 10 minutes later offers a seated, comfortable journey.
+3. **Unbalanced Transit Network Load**: Without density visibility, passenger demand remains heavily concentrated on a handful of well-known corridors while parallel routes run under-utilized.
+
+**CrowdWise** directly solves this by analyzing **2.56M electronic ticketing machine (ETM) records** to deliver **crowdedness-aware journey planning**, empowering riders to trade marginal travel time for comfort, seat availability, and lower transit stress.
+
+---
+
 ## ✨ Features
 
 - 🕒 **Crowdedness-Aware Route Planning**: Suggests the optimal bus route and tells you how packed the bus will be at your specific departure hour.
