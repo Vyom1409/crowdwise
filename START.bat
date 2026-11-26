@@ -104,10 +104,10 @@ if exist "package.json" (
 :: ============================================================================
 :: 5. Verify & Install Python Dependencies
 :: ============================================================================
-"%PY_CMD%" -c "import fastapi, uvicorn" >nul 2>&1
+"%PY_CMD%" -c "import fastapi, uvicorn, httpx" >nul 2>&1
 if !errorlevel! neq 0 (
-    echo Required Python libraries missing. Installing fastapi and uvicorn...
-    "%PY_CMD%" -m pip install fastapi uvicorn
+    echo Required Python libraries missing. Installing fastapi, uvicorn, and httpx...
+    "%PY_CMD%" -m pip install fastapi uvicorn httpx
     if !errorlevel! neq 0 (
         echo.
         echo ======================================================================

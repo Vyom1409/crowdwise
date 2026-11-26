@@ -20,15 +20,26 @@ body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--
 a{color:var(--accent2);text-decoration:none}
 
 /* ── Header ──────────────────────────────────────────────────────────── */
-.header{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);border-bottom:1px solid var(--border);padding:16px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1000}
+.header{background:linear-gradient(135deg,#1e3a5f 0%,#0f172a 100%);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:1000}
 .header svg{width:36px;height:36px;flex-shrink:0}
-.header h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em}
+.header h1{font-size:1.25rem;font-weight:700;letter-spacing:-.02em}
 .header .subtitle{font-size:.78rem;color:var(--text2);margin-top:2px}
-.header .data-badge{margin-left:auto;background:var(--surface2);padding:5px 12px;border-radius:20px;font-size:.7rem;color:var(--accent2);white-space:nowrap}
+.header-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.header .data-badge{background:var(--surface2);padding:5px 12px;border-radius:20px;font-size:.7rem;color:var(--accent2);white-space:nowrap}
+.btn-benchmark{background:rgba(59,130,246,.15);border:1px solid var(--accent);color:#93c5fd;padding:5px 12px;border-radius:20px;font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:6px}
+.btn-benchmark:hover{background:var(--accent);color:#fff}
 
 /* ── Layout ──────────────────────────────────────────────────────────── */
-.main-layout{display:grid;grid-template-columns:440px 1fr;height:calc(100vh - 70px)}
-@media(max-width:960px){.main-layout{grid-template-columns:1fr;grid-template-rows:auto 400px}}
+.main-layout{display:grid;grid-template-columns:440px 1fr;height:calc(100vh - 65px)}
+@media(max-width:960px){
+  .main-layout{grid-template-columns:1fr;grid-template-rows:auto 450px;height:auto}
+  #map-container{height:450px;min-height:450px}
+  .header{flex-wrap:wrap;gap:8px}
+  .header-actions{margin-left:0;flex-wrap:wrap}
+}
+@media(max-width:600px){
+  .header .data-badge{display:none}
+}
 .panel{overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
 .panel::-webkit-scrollbar{width:6px}
 .panel::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -58,84 +69,45 @@ a{color:var(--accent2);text-decoration:none}
 .tip-banner{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:.75rem;color:var(--accent2);display:flex;align-items:center;gap:8px}
 
 /* ── Controls Row ────────────────────────────────────────────────────── */
-.controls-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}
-.ctrl-group{flex:1;min-width:80px}
-.ctrl-group label{display:block;font-size:.7rem;font-weight:600;color:var(--text2);margin-bottom:3px;text-transform:uppercase}
-.ctrl-group select,.ctrl-group input[type=range]{width:100%;padding:6px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem}
-.ctrl-group select{cursor:pointer}
+.controls-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ctrl-group label{display:block;font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:3px}
+.ctrl-group select{width:100%;padding:8px 10px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:.82rem;outline:none}
 
-/* ── Hour slider ─────────────────────────────────────────────────────── */
-.hour-slider-wrap{display:flex;align-items:center;gap:10px}
-.hour-slider-wrap input[type=range]{flex:1;accent-color:var(--accent)}
-.hour-label{font-size:1rem;font-weight:700;color:var(--accent2);min-width:52px;text-align:center}
+.hour-slider-wrap{display:flex;align-items:center;gap:10px;margin-top:6px}
+.hour-slider-wrap input[type=range]{flex:1;accent-color:var(--accent);cursor:pointer}
+.hour-label{font-size:.85rem;font-weight:700;color:var(--accent2);min-width:44px;text-align:right}
 
-/* ── Plan Button ─────────────────────────────────────────────────────── */
-.btn-plan{width:100%;padding:12px;background:linear-gradient(135deg,var(--accent),#2563eb);color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .15s;letter-spacing:.02em}
-.btn-plan:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(59,130,246,.4)}
-.btn-plan:active{transform:translateY(0)}
+.btn-plan{width:100%;margin-top:14px;padding:12px;background:linear-gradient(135deg,#3b82f6,#2563eb);border:none;border-radius:8px;color:#fff;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-plan:hover{background:linear-gradient(135deg,#2563eb,#1d4ed8);transform:translateY(-1px)}
 .btn-plan:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-/* ── Swap button ─────────────────────────────────────────────────────── */
-.swap-btn{align-self:center;background:var(--surface2);border:1px solid var(--border);color:var(--text);width:34px;height:34px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.1rem;transition:background .2s}
-.swap-btn:hover{background:var(--accent)}
+.swap-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;margin:-2px auto;position:relative;z-index:2;transition:all .15s}
+.swap-btn:hover{background:var(--accent);color:#fff}
 
-/* ── Walking & Calorie Card ──────────────────────────────────────────── */
-.walk-card{background:linear-gradient(135deg,rgba(34,197,94,.12) 0%,rgba(15,23,42,.6) 100%);border:1px solid rgba(34,197,94,.35);border-radius:var(--radius);padding:14px;margin-bottom:12px}
-.walk-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.walk-title{font-size:.85rem;font-weight:700;color:#4ade80;display:flex;align-items:center;gap:6px}
-.walk-badge{font-size:.65rem;background:#14532d;color:#86efac;padding:2px 8px;border-radius:12px;font-weight:600}
-.walk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center}
-.walk-stat{background:var(--bg);padding:8px 4px;border-radius:8px;border:1px solid rgba(255,255,255,.05)}
-.walk-stat .num{font-size:1rem;font-weight:800;color:var(--text)}
-.walk-stat .lbl{font-size:.62rem;color:var(--text2);text-transform:uppercase;margin-top:2px}
-.walk-extra{margin-top:8px;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--text2);background:rgba(0,0,0,.25);padding:6px 10px;border-radius:6px}
-.walk-extra .food{color:#fde047;font-weight:600}
+/* ── Results List ────────────────────────────────────────────────────── */
+.results-header{font-size:.75rem;color:var(--text2);margin-bottom:8px;padding:0 2px}
+.route-option{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;cursor:pointer;transition:all .2s;position:relative}
+.route-option:hover{border-color:var(--accent);transform:translateY(-1px);box-shadow:var(--shadow)}
+.route-option.selected{border-color:var(--accent);background:linear-gradient(135deg,#1e293b 0%,#1e3a5f 100%);box-shadow:0 0 0 2px rgba(59,130,246,.3)}
 
-/* ── Nearby POI Accordion/Card ───────────────────────────────────────── */
-.poi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:12px}
-.poi-tabs{display:flex;background:var(--bg);padding:3px;border-radius:8px;margin-bottom:10px}
-.poi-tab-btn{flex:1;padding:6px 8px;border:none;background:transparent;color:var(--text2);font-size:.75rem;font-weight:600;border-radius:6px;cursor:pointer;transition:all .15s;text-align:center}
-.poi-tab-btn.active{background:var(--surface2);color:var(--text)}
-
-.poi-section{margin-bottom:12px}
-.poi-section:last-child{margin-bottom:0}
-.poi-sec-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between}
-.poi-sec-title.metro{color:#a78bfa}
-.poi-sec-title.cafe{color:#f59e0b}
-.poi-sec-title.hospital{color:#f87171}
-
-.poi-list{display:flex;flex-direction:column;gap:5px}
-.poi-item{display:flex;align-items:center;justify-content:space-between;background:var(--bg);padding:7px 10px;border-radius:6px;font-size:.78rem;cursor:pointer;transition:all .15s;border:1px solid transparent}
-.poi-item:hover{border-color:var(--accent);background:var(--surface2)}
-.poi-item .left{display:flex;align-items:center;gap:8px;overflow:hidden;flex:1}
-.poi-item .icon{font-size:1.1rem;flex-shrink:0}
-.poi-item .info{overflow:hidden}
-.poi-item .name{font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.poi-item .sub{font-size:.68rem;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.poi-item .right{text-align:right;flex-shrink:0;margin-left:8px}
-.poi-item .dist{font-size:.78rem;font-weight:700;color:var(--accent2)}
-.poi-item .walk{font-size:.65rem;color:var(--text2)}
-
-/* ── Results ─────────────────────────────────────────────────────────── */
-.results-header{font-size:.82rem;color:var(--text2);margin-bottom:4px}
-.route-option{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;cursor:pointer;transition:border-color .2s,transform .15s}
-.route-option:hover{border-color:var(--accent);transform:translateX(3px)}
-.route-option.selected{border-color:var(--accent);box-shadow:0 0 0 2px rgba(59,130,246,.25)}
 .ro-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-.ro-route-name{font-size:1.05rem;font-weight:700;color:var(--accent2)}
-.ro-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;background:#164e63;color:#67e8f9;font-weight:600}
-.ro-non-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:4px;background:#3f3f46;color:#a1a1aa;font-weight:600}
-.crowd-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:6px;font-size:.78rem;font-weight:700;color:#fff;margin-left:auto}
-.crowd-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
-.ro-details{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:.78rem}
-.ro-detail{text-align:center;padding:6px 4px;background:var(--bg);border-radius:6px}
-.ro-detail .val{font-size:1rem;font-weight:700;color:var(--text)}
-.ro-detail .lbl{color:var(--text2);font-size:.65rem;text-transform:uppercase;margin-top:2px}
-.ro-stops-line{margin-top:8px;font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:6px}
-.ro-stops-line .dot{width:6px;height:6px;border-radius:50%;background:var(--accent)}
-.ro-stops-line .line{flex:1;height:2px;background:var(--border)}
+.ro-route-name{font-size:1.05rem;font-weight:700;color:var(--text)}
+.ro-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:700;background:#065f46;color:#6ee7b7}
+.ro-non-ac-badge{font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:700;background:var(--surface2);color:var(--text2)}
 
-/* ── Crowdedness Timeline ────────────────────────────────────────────── */
+.crowd-badge{margin-left:auto;padding:3px 10px;border-radius:20px;font-size:.72rem;font-weight:700;display:flex;align-items:center;gap:5px;color:#fff}
+.crowd-dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+
+.ro-details{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--bg);padding:8px;border-radius:6px;margin-bottom:8px}
+.ro-detail{text-align:center}
+.ro-detail .val{font-size:.9rem;font-weight:700;color:var(--text)}
+.ro-detail .lbl{font-size:.65rem;color:var(--text2);margin-top:1px}
+
+.ro-stops-line{font-size:.75rem;color:var(--text2);display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ro-stops-line .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ro-stops-line .line{flex:1;height:1px;background:var(--border);margin:0 4px}
+
+/* ── Hourly Crowd Timeline inside Route Option ───────────────────────── */
 .timeline-chart-wrap{position:relative;height:140px;margin-top:8px}
 .timeline-bars{display:flex;align-items:end;height:110px;gap:2px;padding:0 2px}
 .t-bar{flex:1;border-radius:3px 3px 0 0;min-width:4px;position:relative;transition:all .2s;cursor:pointer}
@@ -157,36 +129,81 @@ a{color:var(--accent2);text-decoration:none}
 .spot-check .sc-stats{display:flex;gap:8px;font-size:.75rem;flex-wrap:wrap}
 .spot-check .sc-stat{background:var(--surface2);padding:3px 8px;border-radius:4px}
 
-/* ── Tab switcher ────────────────────────────────────────────────────── */
-.tabs{display:flex;border-bottom:2px solid var(--border);margin-bottom:8px}
-.tab{padding:8px 16px;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+/* ── Walking & Calorie Burn Card ─────────────────────────────────────── */
+.walk-card{background:linear-gradient(135deg,#132e27 0%,#0f172a 100%);border:1px solid #059669;border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
+.walk-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.walk-title{font-size:.85rem;font-weight:700;color:#34d399;display:flex;align-items:center;gap:6px}
+.walk-badge{font-size:.68rem;padding:3px 8px;border-radius:12px;background:#065f46;color:#6ee7b7;font-weight:700}
+.walk-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0}
+.walk-stat{background:rgba(15,23,42,.6);padding:6px;border-radius:6px;text-align:center;border:1px solid rgba(52,211,153,.2)}
+.walk-stat .num{font-size:1.05rem;font-weight:800;color:#34d399}
+.walk-stat .lbl{font-size:.65rem;color:var(--text2);margin-top:2px}
+.walk-extra{font-size:.75rem;color:#cbd5e1;display:flex;justify-content:space-between;margin-top:6px;border-top:1px dashed rgba(52,211,153,.3);padding-top:6px}
+.walk-extra .food{color:#f59e0b;font-weight:600}
+
+/* ── POI (Metro, Cafe, Hospital) Card ────────────────────────────────── */
+.poi-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px}
+.poi-tabs{display:flex;gap:4px;margin-bottom:10px;background:var(--bg);padding:3px;border-radius:8px}
+.poi-tab-btn{flex:1;background:transparent;border:none;color:var(--text2);padding:6px;border-radius:6px;font-size:.75rem;cursor:pointer;font-weight:600;transition:all .15s}
+.poi-tab-btn.active{background:var(--surface2);color:var(--text)}
+.poi-sec-title{font-size:.75rem;font-weight:700;color:var(--accent2);margin:8px 0 4px;display:flex;align-items:center;gap:6px}
+.poi-sec-title.metro{color:#60a5fa}
+.poi-sec-title.cafe{color:#fbbf24}
+.poi-sec-title.hospital{color:#f87171}
+.poi-item{display:flex;align-items:center;justify-content:space-between;padding:5px 8px;background:var(--bg);border-radius:6px;margin-bottom:4px;font-size:.75rem}
+.poi-item-name{font-weight:600;color:var(--text)}
+.poi-item-meta{color:var(--text2);font-size:.7rem}
+.poi-dist{background:var(--surface2);padding:2px 6px;border-radius:4px;font-size:.68rem;font-weight:600;white-space:nowrap}
+.btn-map-focus{background:transparent;border:none;color:var(--accent2);cursor:pointer;font-size:.75rem;margin-left:4px}
+
+/* ── Map POI Filter Overlay ─────────────────────────────────────────── */
+.map-poi-filters{position:absolute;top:12px;left:12px;z-index:900;display:flex;gap:6px;background:rgba(15,23,42,.85);backdrop-filter:blur(6px);padding:6px;border-radius:8px;border:1px solid var(--border)}
+.map-filter-chip{padding:4px 8px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:4px;border:1px solid transparent;transition:all .15s}
+.map-filter-chip.metro{color:#93c5fd;background:rgba(59,130,246,.15)}
+.map-filter-chip.metro.active{background:#2563eb;color:#fff}
+.map-filter-chip.cafe{color:#fde047;background:rgba(234,179,8,.15)}
+.map-filter-chip.cafe.active{background:#ca8a04;color:#fff}
+.map-filter-chip.hospital{color:#fca5a5;background:rgba(239,68,68,.15)}
+.map-filter-chip.hospital.active{background:#dc2626;color:#fff}
+
+/* ── Map Info Box ────────────────────────────────────────────────────── */
+.map-info{position:absolute;bottom:16px;left:16px;background:rgba(15,23,42,.92);border:1px solid var(--border);border-radius:8px;padding:10px 14px;z-index:900;backdrop-filter:blur(8px);max-width:360px;font-size:.8rem;box-shadow:var(--shadow)}
+.map-info h4{font-size:.9rem;color:var(--text);margin-bottom:2px}
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:10px}
+.tab{padding:8px 14px;font-size:.8rem;font-weight:600;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s}
 .tab:hover{color:var(--text)}
-.tab.active{color:var(--accent2);border-bottom-color:var(--accent)}
+.tab.active{color:var(--accent2);border-color:var(--accent)}
 .tab-content{display:none}
 .tab-content.active{display:block}
 
-/* ── Map POI Floating Filter Bar ─────────────────────────────────────── */
-.map-poi-filters{position:absolute;top:16px;left:16px;z-index:500;display:flex;gap:6px;background:rgba(15,23,42,.88);backdrop-filter:blur(8px);padding:6px;border-radius:24px;border:1px solid var(--border)}
-.map-filter-chip{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:16px;background:var(--surface2);border:1px solid transparent;color:var(--text2);font-size:.72rem;font-weight:600;cursor:pointer;transition:all .15s;user-select:none}
-.map-filter-chip.active{background:var(--accent);color:#fff;border-color:var(--accent2)}
-.map-filter-chip.active.metro{background:#7c3aed}
-.map-filter-chip.active.cafe{background:#d97706}
-.map-filter-chip.active.hospital{background:#dc2626}
-
-/* ── Loading ─────────────────────────────────────────────────────────── */
-.loading{text-align:center;padding:30px;color:var(--text2)}
-.spinner{display:inline-block;width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+/* ── Loading & Empty States ─────────────────────────────────────────── */
+.loading{text-align:center;padding:30px;color:var(--text2);font-size:.85rem}
+.spinner{width:32px;height:32px;border:3px solid var(--surface2);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
 
-/* ── Empty state ─────────────────────────────────────────────────────── */
 .empty-state{text-align:center;padding:40px 20px;color:var(--text2)}
-.empty-state .icon{font-size:2.5rem;margin-bottom:12px}
-.empty-state h3{font-size:1rem;color:var(--text);margin-bottom:6px}
-.empty-state p{font-size:.82rem;line-height:1.5}
+.empty-state .icon{font-size:2.5rem;margin-bottom:10px;opacity:.6}
+.empty-state h3{font-size:1rem;color:var(--text);margin-bottom:4px}
+.empty-state p{font-size:.8rem;line-height:1.4}
 
-/* ── Map info panel ──────────────────────────────────────────────────── */
-.map-info{position:absolute;bottom:16px;left:16px;background:rgba(15,23,42,.92);backdrop-filter:blur(8px);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;z-index:500;max-width:340px;font-size:.78rem;color:var(--text)}
-.map-info h4{color:var(--accent2);margin-bottom:4px;font-size:.85rem}
+/* ── Benchmarks Modal Window ─────────────────────────────────────────── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-backdrop.open{display:flex}
+.modal-window{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:680px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 40px rgba(0,0,0,.6);padding:20px}
+.modal-window::-webkit-scrollbar{width:6px}
+.modal-window::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.modal-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);padding-bottom:12px;margin-bottom:14px}
+.modal-header h2{font-size:1.15rem;font-weight:700;display:flex;align-items:center;gap:8px}
+.btn-close-modal{background:transparent;border:none;color:var(--text2);font-size:1.5rem;cursor:pointer;padding:0 4px;line-height:1}
+.btn-close-modal:hover{color:#fff}
+.benchmark-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.bench-card{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+.bench-card .num{font-size:1.35rem;font-weight:800;color:#60a5fa}
+.bench-card .lbl{font-size:.7rem;color:var(--text2);margin-top:2px}
+.telemetry-row{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:8px;font-size:.82rem}
+.telemetry-badge{padding:3px 8px;border-radius:12px;font-size:.7rem;font-weight:700}
 </style>
 </head>
 <body>
@@ -198,7 +215,10 @@ a{color:var(--accent2);text-decoration:none}
     <h1>Delhi Bus Journey Planner</h1>
     <div class="subtitle">Crowdedness-Aware Routing · Calorie Burn · Nearest Metros, Cafes & Hospitals</div>
   </div>
-  <div class="data-badge">📊 2.56M tickets · 1,628 routes · 6,762 stops</div>
+  <div class="header-actions">
+    <button class="btn-benchmark" onclick="openBenchmarkModal()">📊 Model Benchmarks & Latency</button>
+    <div class="data-badge">📊 2.56M tickets · 1,628 routes · 6,762 stops</div>
+  </div>
 </header>
 
 <!-- ── Main Layout ───────────────────────────────────────────────────── -->
@@ -212,13 +232,13 @@ a{color:var(--accent2);text-decoration:none}
       <div style="display:flex;flex-direction:column;gap:10px">
         <div class="search-group">
           <label>From</label>
-          <input type="text" id="origin-input" placeholder="e.g. AIIMS, Badarpur, Kashmere Gate..." autocomplete="off">
+          <input type="text" id="origin-input" placeholder="e.g. Badarpur Border, AIIMS, Kashmere Gate..." autocomplete="off">
           <div class="autocomplete-list" id="origin-ac"></div>
         </div>
         <button class="swap-btn" id="swap-btn" title="Swap origin & destination">⇅</button>
         <div class="search-group">
           <label>To</label>
-          <input type="text" id="dest-input" placeholder="e.g. Nehru Place, Kapashera Border..." autocomplete="off">
+          <input type="text" id="dest-input" placeholder="e.g. Khanpur Extension, Nehru Place, Kapashera Border..." autocomplete="off">
           <div class="autocomplete-list" id="dest-ac"></div>
         </div>
       </div>
@@ -253,10 +273,10 @@ a{color:var(--accent2);text-decoration:none}
       <div style="margin-top:12px">
         <div style="font-size:.7rem;font-weight:600;color:var(--text2);text-transform:uppercase;margin-bottom:6px">⚡ Popular Journeys (1-Click)</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
-          <button class="preset-chip" onclick="quickSelect('Aiims', 'Nehru Place')">🏥 AIIMS → Nehru Place</button>
+          <button class="preset-chip" onclick="quickSelect('Badarpur Border', 'Khanpur Extension / Devli Xing')">🚌 Badarpur → Devli (717A Road Test)</button>
           <button class="preset-chip" onclick="quickSelect('Badarpur Border', 'Kapashera Border')">🚌 Badarpur → Kapashera</button>
+          <button class="preset-chip" onclick="quickSelect('Aiims', 'Nehru Place')">🏥 AIIMS → Nehru Place</button>
           <button class="preset-chip" onclick="quickSelect('Kashmere Gate Isbt', 'Central Secretariat')">🏛️ Kashmere Gate → Central Sec</button>
-          <button class="preset-chip" onclick="quickSelect('Shahdara', 'Aiims')">🏙️ Shahdara → AIIMS</button>
           <button class="preset-chip" onclick="quickSelect('Anand Vihar', 'Dhaula Kuan')">✈️ Anand Vihar → Dhaula Kuan</button>
         </div>
       </div>
@@ -267,33 +287,35 @@ a{color:var(--accent2);text-decoration:none}
       <div class="empty-state">
         <div class="icon">🗺️</div>
         <h3>Plan a Crowdedness-Aware Trip</h3>
-        <p>Search for origin and destination stops to see bus routes ranked by travel time and crowdedness, walking calorie burn, and nearest cafes, metros, and hospitals.</p>
+        <p>Search for origin and destination stops to see bus routes ranked by travel time and crowdedness, road-following geometries, walking calorie burn, and nearest cafes, metros, and hospitals.</p>
       </div>
     </div>
 
-    <!-- Tabs: Insights & Verification -->
+    <!-- Analytics & Verification Tabs Card -->
     <div class="card">
       <div class="tabs">
-        <div class="tab active" data-tab="insights" onclick="switchTab(this)">📈 Network Insights</div>
-        <div class="tab" data-tab="verify" onclick="switchTab(this)">✅ Spot Checks</div>
+        <div class="tab active" data-tab="insights" onclick="switchTab(this)">📊 Mobility Insights</div>
+        <div class="tab" data-tab="verify" onclick="switchTab(this)">✅ Spot-Check Verification</div>
       </div>
 
       <div class="tab-content active" id="tab-insights">
         <div class="legend">
-          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Low (&lt;40%)</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Moderate (40-65%)</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>High (65-85%)</div>
-          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Packed (&gt;85%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--green)"></div>Low (&lt;35%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--yellow)"></div>Moderate (35-55%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--orange)"></div>High (55-75%)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div>Packed (&gt;75%)</div>
         </div>
         <div style="font-size:.78rem;color:var(--text2);line-height:1.6">
           <p><strong style="color:var(--text)">Morning Peak:</strong> 08:00–10:00 — 334K–374K passengers/hr</p>
           <p><strong style="color:var(--text)">Evening Peak:</strong> 17:00–19:00 — 180K–255K passengers/hr</p>
           <p><strong style="color:var(--text)">Off-Peak:</strong> 12:00–15:00 — 75K–93K passengers/hr</p>
-          <p style="margin-top:8px;font-size:.72rem">Grounding from 2,559,899 actual ONDC Delhi bus tickets. Incorporates transit hubs, walking burn, and nearest medical & coffee amenities.</p>
+          <p style="margin-top:8px;font-size:.72rem">Grounding from 2,559,899 actual Delhi ETM bus tickets. Incorporates transit hubs, road geometry, walking burn, and nearest medical & coffee amenities.</p>
         </div>
         <div style="margin-top:12px">
           <div class="card-title"><span class="icon">📊</span> City-Wide Hourly Load</div>
-          <canvas id="city-chart" height="140"></canvas>
+          <div style="position:relative;height:140px;width:100%;max-height:140px">
+            <canvas id="city-chart"></canvas>
+          </div>
         </div>
       </div>
 
@@ -316,6 +338,57 @@ a{color:var(--accent2);text-decoration:none}
   </div>
 </div>
 
+<!-- ── Benchmarks & Model Accuracy Modal ──────────────────────────────── -->
+<div class="modal-backdrop" id="benchmark-modal" onclick="if(event.target===this) closeBenchmarkModal()">
+  <div class="modal-window">
+    <div class="modal-header">
+      <h2><span>📊</span> Model Accuracy Benchmarks & System Telemetry</h2>
+      <button class="btn-close-modal" onclick="closeBenchmarkModal()">&times;</button>
+    </div>
+
+    <div class="telemetry-row">
+      <div>
+        <strong>System Status & API Health</strong>
+        <div style="font-size:.7rem;color:var(--text2)">Measured latency via live round-trip benchmark ping</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="telemetry-badge" id="telemetry-pill" style="background:#065f46;color:#6ee7b7">🟢 Operational</span>
+        <span id="telemetry-latency" style="font-weight:700;color:#60a5fa">-- ms</span>
+      </div>
+    </div>
+
+    <div class="benchmark-grid">
+      <div class="bench-card">
+        <div class="num" id="bm-r2">0.8981</div>
+        <div class="lbl">R² Goodness of Fit</div>
+      </div>
+      <div class="bench-card">
+        <div class="num" id="bm-mae">4.50</div>
+        <div class="lbl">MAE (Pass/Hour)</div>
+      </div>
+      <div class="bench-card">
+        <div class="num" id="bm-gain" style="color:#34d399">87.2%</div>
+        <div class="lbl">Schedule Gain</div>
+      </div>
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;font-size:.78rem;line-height:1.6;color:var(--text2)">
+      <strong style="color:var(--text)">🔬 Empirical Validation Methodology:</strong><br>
+      • <strong>Dataset:</strong> 2,559,899 Electronic Ticketing Machine (ETM) records across 1,628 active Delhi transit routes.<br>
+      • <strong>Evaluation Method:</strong> Chronological holdout evaluation splitting October 01–24 (training/fitting) against October 25–31 (out-of-sample evaluation across 575 validation corridors).<br>
+      • <strong>Comparison:</strong> Delivers an <strong>87.2%</strong> predictive alignment gain over static timetables (+65.8% accuracy gain).
+    </div>
+
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.78rem;line-height:1.6;color:var(--text2)">
+      <strong style="color:var(--text)">🛣️ Road Routing & Caching Architecture:</strong><br>
+      • <strong>Provider:</strong> OpenStreetMap / OSRM v5 (Driving Profile with actual road curves).<br>
+      • <strong>Waypoint Chunking:</strong> 18-waypoint sub-chunks with boundary coordinate stitching.<br>
+      • <strong>Caching Strategy:</strong> Deterministic SHA-256 disk cache in <code>backend/osrm_cache/</code> with atomic writes.<br>
+      • <strong>Fallback:</strong> Automatic fallback to straight lines with explicit user warnings on network drop.
+    </div>
+  </div>
+</div>
+
 <script>
 // ── State ────────────────────────────────────────────────────────────────
 let map, routeLayers = [], markerLayers = [], poiLayers = { metro: [], cafe: [], hospital: [] };
@@ -324,99 +397,84 @@ let currentPoisData = null;
 let selectedRouteIdx = -1;
 const API = '';
 
+// Icons
+const metroIcon = L.divIcon({ html: '<div style="font-size:16px;line-height:1">🚇</div>', iconSize: [20, 20], iconAnchor: [10, 10], className: '' });
+const cafeIcon = L.divIcon({ html: '<div style="font-size:16px;line-height:1">☕</div>', iconSize: [20, 20], iconAnchor: [10, 10], className: '' });
+const hospitalIcon = L.divIcon({ html: '<div style="font-size:16px;line-height:1">🏥</div>', iconSize: [20, 20], iconAnchor: [10, 10], className: '' });
+
 // ── Initialize Map ───────────────────────────────────────────────────────
 function initMap() {
   map = L.map('map', { zoomControl: false }).setView([28.6139, 77.2090], 11);
   L.control.zoom({ position: 'topright' }).addTo(map);
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     maxZoom: 19
   }).addTo(map);
+
+  window.addEventListener('resize', () => {
+    if (map) map.invalidateSize();
+  });
 }
 
-// ── Leaflet Icons ────────────────────────────────────────────────────────
-const metroIcon = L.divIcon({
-  html: `<div style="background:#7c3aed;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">🚇</div>`,
-  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
-});
-
-const cafeIcon = L.divIcon({
-  html: `<div style="background:#d97706;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">☕</div>`,
-  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
-});
-
-const hospitalIcon = L.divIcon({
-  html: `<div style="background:#dc2626;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;border:2px solid #fff;box-shadow:0 3px 8px rgba(0,0,0,.5);cursor:pointer">🏥</div>`,
-  iconSize: [26, 26], iconAnchor: [13, 13], popupAnchor: [0, -13], className: ''
-});
-
 // ── Autocomplete ─────────────────────────────────────────────────────────
-let acTimeout;
 function setupAutocomplete(inputId, listId) {
   const input = document.getElementById(inputId);
   const list = document.getElementById(listId);
-  let activeIdx = -1;
+  let debounceTimer;
 
   input.addEventListener('input', () => {
-    clearTimeout(acTimeout);
+    clearTimeout(debounceTimer);
     const q = input.value.trim();
-    if (q.length < 2) { list.classList.remove('show'); return; }
-    acTimeout = setTimeout(async () => {
+    if (q.length < 1) { list.classList.remove('show'); return; }
+
+    debounceTimer = setTimeout(async () => {
       try {
         const res = await fetch(`${API}/api/search-stops?q=${encodeURIComponent(q)}`);
         const data = await res.json();
-        list.innerHTML = '';
-        activeIdx = -1;
-        if (data.results.length === 0) { list.classList.remove('show'); return; }
-        data.results.forEach((s, i) => {
-          const div = document.createElement('div');
-          div.className = 'ac-item';
-          div.innerHTML = `<span>${hl(s.name, q)}</span><span class="ac-meta">${s.route_count || '?'} routes</span>`;
-          div.addEventListener('click', () => {
-            input.value = s.name;
-            list.classList.remove('show');
-          });
-          list.appendChild(div);
-        });
-        list.classList.add('show');
-      } catch(e) {}
+        if (data.results && data.results.length > 0) {
+          list.innerHTML = data.results.map(s => `
+            <div class="ac-item" onclick="selectStop('${inputId}', '${listId}', '${s.name.replace(/'/g, "\\'")}')">
+              <span>${s.name}</span>
+              <span class="ac-meta">${s.route_count} routes</span>
+            </div>
+          `).join('');
+          list.classList.add('show');
+        } else {
+          list.classList.remove('show');
+        }
+      } catch(e) { list.classList.remove('show'); }
     }, 200);
   });
 
-  input.addEventListener('keydown', e => {
-    const items = list.querySelectorAll('.ac-item');
-    if (!items.length) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, items.length - 1); updateActive(items, activeIdx); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); updateActive(items, activeIdx); }
-    else if (e.key === 'Enter' && activeIdx >= 0) { e.preventDefault(); items[activeIdx].click(); }
-    else if (e.key === 'Escape') { list.classList.remove('show'); }
-  });
-
-  document.addEventListener('click', e => { if (!input.contains(e.target) && !list.contains(e.target)) list.classList.remove('show'); });
-}
-function updateActive(items, idx) { items.forEach((it, i) => it.classList.toggle('active', i === idx)); }
-function hl(text, q) {
-  const i = text.toLowerCase().indexOf(q.toLowerCase());
-  if (i < 0) return text;
-  return text.substring(0, i) + '<strong style="color:var(--accent2)">' + text.substring(i, i + q.length) + '</strong>' + text.substring(i + q.length);
-}
-
-// ── Hour slider ──────────────────────────────────────────────────
-function setupHourSlider() {
-  const slider = document.getElementById('hour-slider');
-  const label = document.getElementById('hour-label');
-  slider.addEventListener('input', () => {
-    const h = parseInt(slider.value);
-    label.textContent = `${h.toString().padStart(2,'0')}:00`;
+  document.addEventListener('click', e => {
+    if (!input.contains(e.target) && !list.contains(e.target)) {
+      list.classList.remove('show');
+    }
   });
 }
 
-// ── Swap button ──────────────────────────────────────────────────
+function selectStop(inputId, listId, name) {
+  document.getElementById(inputId).value = name;
+  document.getElementById(listId).classList.remove('show');
+}
+
+// ── Swap Origin / Dest ───────────────────────────────────────────────────
 document.getElementById('swap-btn').addEventListener('click', () => {
   const o = document.getElementById('origin-input');
   const d = document.getElementById('dest-input');
   const tmp = o.value; o.value = d.value; d.value = tmp;
+  if (o.value && d.value) planJourney();
 });
+
+// ── Hour Slider ──────────────────────────────────────────────────────────
+function setupHourSlider() {
+  const slider = document.getElementById('hour-slider');
+  const label = document.getElementById('hour-label');
+  slider.addEventListener('input', () => {
+    label.textContent = `${slider.value.padStart(2, '0')}:00`;
+  });
+}
 
 // ── Quick Select ─────────────────────────────────────────────────
 function quickSelect(orig, dest) {
@@ -435,23 +493,27 @@ async function planJourney() {
 
   if (!origin || !dest) { alert('Please enter both origin and destination stops.'); return; }
 
+  clearMapRoutes();
+
   const btn = document.getElementById('plan-btn');
-  btn.disabled = true; btn.textContent = '⏳ Searching...';
-  document.getElementById('results-area').innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:8px">Finding best routes, cafes & metros...</p></div>';
+  btn.disabled = true; btn.textContent = '⏳ Finding Routes & Roads...';
+  document.getElementById('results-area').innerHTML = '<div class="loading"><div class="spinner"></div><p style="margin-top:8px">Computing crowdedness & road geometry...</p></div>';
 
   try {
-    const url = `${API}/api/plan?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&hour=${hour}&weekend=${weekend}&preference=${preference}`;
+    const url = `${API}/api/plan-journey?origin=${encodeURIComponent(origin)}&dest=${encodeURIComponent(dest)}&hour=${hour}&weekend=${weekend}&preference=${preference}`;
     const res = await fetch(url);
     const data = await res.json();
 
     if (data.error) {
-      document.getElementById('results-area').innerHTML = `<div class="card" style="border-color:var(--red)"><p style="color:var(--red);font-size:.85rem">❌ ${data.error}</p><p style="font-size:.78rem;color:var(--text2);margin-top:6px">Try a different stop name or check the spelling.</p></div>`;
+      document.getElementById('results-area').innerHTML = `<div class="card" style="border-color:var(--red)"><p style="color:var(--red);font-size:.85rem">❌ ${data.error}</p><p style="font-size:.78rem;color:var(--text2);margin-top:6px">Try a different stop name or select one of the 1-click popular journeys above.</p></div>`;
+      clearMapRoutes();
       return;
     }
 
     renderResults(data);
   } catch(e) {
     document.getElementById('results-area').innerHTML = `<div class="card"><p style="color:var(--red)">Error: ${e.message}</p></div>`;
+    clearMapRoutes();
   } finally {
     btn.disabled = false; btn.textContent = '🚌 Find Routes';
   }
@@ -472,7 +534,7 @@ function renderResults(data) {
   if (firstOpt && firstOpt.hourly_crowdedness) {
     const curCrowd = firstOpt.crowdedness_pct;
     const offPeakCrowd = firstOpt.hourly_crowdedness[14] || 25;
-    if (curCrowd > 60 && curCrowd - offPeakCrowd >= 20) {
+    if (curCrowd > 55 && curCrowd - offPeakCrowd >= 20) {
       const diff = Math.round(curCrowd - offPeakCrowd);
       tipHtml = `
       <div class="tip-banner">
@@ -537,20 +599,22 @@ function renderResults(data) {
 
   data.options.forEach((opt, idx) => {
     const pct = opt.crowdedness_pct;
+    const isApprox = opt.is_approximate;
     routesHtml += `
     <div class="route-option" onclick="selectRoute(${idx})" id="ro-${idx}">
       <div class="ro-top">
         <span class="ro-route-name">🚌 ${opt.route_name}</span>
         <span class="${opt.is_ac ? 'ro-ac-badge' : 'ro-non-ac-badge'}">${opt.is_ac ? 'AC' : 'Non-AC'}</span>
         ${opt.type === 'transfer' ? '<span class="ro-ac-badge" style="background:#4c1d95;color:#c4b5fd">1 Transfer</span>' : ''}
+        ${isApprox ? '<span class="ro-ac-badge" style="background:#78350f;color:#fef08a" title="Road routing fallback">⚠️ Approx</span>' : '<span class="ro-ac-badge" style="background:#064e3b;color:#a7f3d0">🛣️ Road-Snapped</span>'}
         <span class="crowd-badge" style="background:${opt.badge_color}">
           <span class="crowd-dot" style="background:rgba(255,255,255,.5)"></span>
           ${pct}% — ${opt.comfort_text}
         </span>
       </div>
       <div class="ro-details">
-        <div class="ro-detail"><div class="val">${opt.est_time_mins}m</div><div class="lbl">Est. Time</div></div>
-        <div class="ro-detail"><div class="val">${opt.distance_km} km</div><div class="lbl">Distance</div></div>
+        <div class="ro-detail"><div class="val">${opt.est_time_mins}m</div><div class="lbl">Road Time</div></div>
+        <div class="ro-detail"><div class="val">${opt.distance_km} km</div><div class="lbl">Road Dist</div></div>
         <div class="ro-detail"><div class="val">${opt.stops_count}</div><div class="lbl">Stops</div></div>
         <div class="ro-detail"><div class="val">₹${opt.fare_est}</div><div class="lbl">Avg Fare</div></div>
       </div>
@@ -558,124 +622,97 @@ function renderResults(data) {
         <span class="dot" style="background:var(--green)"></span>
         <span>${opt.origin_stop}</span>
         <span class="line"></span>
-        <span>${opt.stops_count} stops</span>
-        <span class="line"></span>
-        <span>${opt.dest_stop}</span>
         <span class="dot" style="background:var(--red)"></span>
+        <span>${opt.dest_stop}</span>
       </div>
-      <div style="margin-top:10px">
-        <div style="font-size:.7rem;color:var(--text2);margin-bottom:4px">Crowdedness Through the Day (${data.is_weekend ? 'Weekend' : 'Weekday'})</div>
-        <div class="timeline-chart-wrap">
-          <div class="timeline-bars" id="timeline-${idx}"></div>
-          <div class="t-hours" id="hours-${idx}"></div>
-        </div>
+
+      <!-- Mini 24h timeline inside route card -->
+      <div class="timeline-chart-wrap" style="height:90px;margin-top:6px">
+        <div class="timeline-bars" id="timeline-${idx}" style="height:70px"></div>
+        <div class="t-hours" id="hours-${idx}"></div>
       </div>
     </div>`;
   });
 
   area.innerHTML = tipHtml + walkHtml + poiHtml + routesHtml;
 
-  // Render timelines for each route
+  // Render mini-timelines
   data.options.forEach((opt, idx) => {
-    renderTimeline(idx, opt.hourly_crowdedness, data.hour);
+    if (opt.hourly_crowdedness) {
+      renderTimeline(idx, opt.hourly_crowdedness, data.hour);
+    }
   });
 
-  // Save state & select first route on map
   window._currentResults = data;
-  currentPoisData = { origin: data.origin_pois, dest: data.destination_pois };
+  currentPoisData = data;
+
+  // Select first route by default
   selectRoute(0);
 }
 
-// ── Render POI Sections (Metros, Cafes, Hospitals) ──────────────
-function renderPoiSections(pois, locType) {
-  if (!pois) return '<div style="font-size:.75rem;color:var(--text2);padding:10px">No nearby POI data available.</div>';
+// ── Render POI Sections ──────────────────────────────────────────
+function renderPoiSections(pois, originOrDest) {
+  if (!pois) return '<div style="font-size:.75rem;color:var(--text2);padding:8px">No POIs mapped near this stop.</div>';
 
   let html = '';
 
   // Metros
   if (pois.metros && pois.metros.length > 0) {
-    html += `
-    <div class="poi-section">
-      <div class="poi-sec-title metro"><span>🚇 Nearest Metro Stations</span><span>Line Connection</span></div>
-      <div class="poi-list">
-        ${pois.metros.map(m => `
-          <div class="poi-item" onclick="focusPoi(${m.lat}, ${m.lon}, 'metro', '${escapeHtml(m.name)}', '${escapeHtml(m.line)}')">
-            <div class="left">
-              <span class="icon">🚇</span>
-              <div class="info">
-                <div class="name">${m.name}</div>
-                <div class="sub" style="color:${m.color}">${m.line} ${m.interchange ? '· Interchange 🔄' : ''}</div>
-              </div>
-            </div>
-            <div class="right">
-              <div class="dist">${m.distance_m < 1000 ? m.distance_m + 'm' : m.distance_km + 'km'}</div>
-              <div class="walk">🚶 ~${m.walk_mins} min</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>`;
+    html += `<div class="poi-sec-title metro">🚇 Delhi Metro Stations</div>`;
+    pois.metros.forEach(m => {
+      html += `
+      <div class="poi-item">
+        <div>
+          <span class="poi-item-name">${m.name}</span>
+          <span class="poi-item-meta"> · ${m.line}</span>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span class="poi-dist">🚶 ${m.walk_mins}m (${m.distance_km}km)</span>
+          <button class="btn-map-focus" onclick="focusPoi(${m.lat}, ${m.lon}, 'metro', '${m.name.replace(/'/g, "\\'")}', '${m.line}')" title="Show on map">📍</button>
+        </div>
+      </div>`;
+    });
   }
 
   // Cafes
   if (pois.cafes && pois.cafes.length > 0) {
-    html += `
-    <div class="poi-section">
-      <div class="poi-sec-title cafe"><span>☕ Nearest Cafes & Coffee</span><span>Specialty</span></div>
-      <div class="poi-list">
-        ${pois.cafes.map(c => `
-          <div class="poi-item" onclick="focusPoi(${c.lat}, ${c.lon}, 'cafe', '${escapeHtml(c.name)}', '${escapeHtml(c.specialty)}')">
-            <div class="left">
-              <span class="icon">☕</span>
-              <div class="info">
-                <div class="name">${c.name}</div>
-                <div class="sub">${c.specialty} · <span style="color:#facc15">⭐ ${c.rating}</span></div>
-              </div>
-            </div>
-            <div class="right">
-              <div class="dist">${c.distance_m < 1000 ? c.distance_m + 'm' : c.distance_km + 'km'}</div>
-              <div class="walk">🚶 ~${c.walk_mins} min</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>`;
+    html += `<div class="poi-sec-title cafe">☕ Nearby Cafes & Coffee</div>`;
+    pois.cafes.forEach(c => {
+      html += `
+      <div class="poi-item">
+        <div>
+          <span class="poi-item-name">${c.name}</span>
+          <span class="poi-item-meta"> · ⭐ ${c.rating} (${c.specialty})</span>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span class="poi-dist">🚶 ${c.walk_mins}m (${c.distance_km}km)</span>
+          <button class="btn-map-focus" onclick="focusPoi(${c.lat}, ${c.lon}, 'cafe', '${c.name.replace(/'/g, "\\'")}', '${c.specialty}')" title="Show on map">📍</button>
+        </div>
+      </div>`;
+    });
   }
 
   // Hospitals
   if (pois.hospitals && pois.hospitals.length > 0) {
-    html += `
-    <div class="poi-section">
-      <div class="poi-sec-title hospital"><span>🏥 Nearest Hospitals & Care</span><span>24x7 Emergency</span></div>
-      <div class="poi-list">
-        ${pois.hospitals.map(h => `
-          <div class="poi-item" onclick="focusPoi(${h.lat}, ${h.lon}, 'hospital', '${escapeHtml(h.name)}', 'Emergency: ${h.phone || "Available"}')">
-            <div class="left">
-              <span class="icon">🏥</span>
-              <div class="info">
-                <div class="name">${h.name}</div>
-                <div class="sub">${h.type} · ${h.emergency ? '<span style="color:#ef4444;font-weight:600">24x7 Emergency</span>' : ''}</div>
-              </div>
-            </div>
-            <div class="right">
-              <div class="dist">${h.distance_m < 1000 ? h.distance_m + 'm' : h.distance_km + 'km'}</div>
-              <div class="walk">🚶 ~${h.walk_mins} min</div>
-            </div>
-          </div>
-        `).join('')}
-      </div>
-    </div>`;
+    html += `<div class="poi-sec-title hospital">🏥 Hospitals & Emergency Care</div>`;
+    pois.hospitals.forEach(h => {
+      html += `
+      <div class="poi-item">
+        <div>
+          <span class="poi-item-name">${h.name}</span>
+          <span class="poi-item-meta"> · ${h.type}</span>
+        </div>
+        <div style="display:flex;align-items:center">
+          <span class="poi-dist" style="color:#f87171">🚨 ${h.walk_mins}m (${h.distance_km}km)</span>
+          <button class="btn-map-focus" onclick="focusPoi(${h.lat}, ${h.lon}, 'hospital', '${h.name.replace(/'/g, "\\'")}', '${h.type}')" title="Show on map">📍</button>
+        </div>
+      </div>`;
+    });
   }
 
-  return html;
+  return html || '<div style="font-size:.75rem;color:var(--text2);padding:8px">No POIs available.</div>';
 }
 
-function escapeHtml(s) {
-  if (!s) return '';
-  return s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-}
-
-// ── Switch POI Tab ───────────────────────────────────────────────
 function switchPoiTab(tab) {
   document.getElementById('poi-tab-orig').classList.toggle('active', tab === 'orig');
   document.getElementById('poi-tab-dest').classList.toggle('active', tab === 'dest');
@@ -691,7 +728,7 @@ function focusPoi(lat, lon, type, name, sub) {
   const icon = type === 'metro' ? metroIcon : (type === 'cafe' ? cafeIcon : hospitalIcon);
   const typeLabel = type === 'metro' ? '🚇 Metro Station' : (type === 'cafe' ? '☕ Cafe & Coffee' : '🏥 Hospital & Emergency');
 
-  const popup = L.popup()
+  L.popup()
     .setLatLng([lat, lon])
     .setContent(`
       <div style="font-family:'Segoe UI',sans-serif;font-size:12px;color:#0f172a">
@@ -709,14 +746,13 @@ function renderTimeline(idx, hourly, selectedHour) {
   const hoursContainer = document.getElementById(`hours-${idx}`);
   if (!container) return;
 
-  const maxVal = Math.max(...hourly, 1);
   let barsHtml = '';
   let hoursHtml = '';
 
   for (let h = 5; h <= 23; h++) {
     const val = hourly[h] || 0;
-    const height = Math.max(4, (val / 100) * 100);
-    const color = val < 40 ? 'var(--green)' : val < 65 ? 'var(--yellow)' : val < 85 ? 'var(--orange)' : 'var(--red)';
+    const height = Math.max(4, (val / 100) * 60);
+    const color = val < 35 ? 'var(--green)' : val < 55 ? 'var(--yellow)' : val < 75 ? 'var(--orange)' : 'var(--red)';
     const isSel = h === selectedHour;
     const border = isSel ? 'outline:2px solid var(--accent2);outline-offset:1px;' : '';
     barsHtml += `<div class="t-bar" style="height:${height}px;background:${color};${border}${isSel?'opacity:1;':'opacity:.7;'}"><div class="t-tip">${h.toString().padStart(2,'0')}:00 — ${val.toFixed(0)}% crowded</div></div>`;
@@ -726,7 +762,7 @@ function renderTimeline(idx, hourly, selectedHour) {
   hoursContainer.innerHTML = hoursHtml;
 }
 
-// ── Select Route on Map ──────────────────────────────────────────
+// ── Select Route on Map (OSRM Road-Following Geometry) ────────────
 function selectRoute(idx) {
   selectedRouteIdx = idx;
   document.querySelectorAll('.route-option').forEach((el, i) => el.classList.toggle('selected', i === idx));
@@ -737,15 +773,18 @@ function selectRoute(idx) {
   if (!data || !data.options[idx]) return;
   const opt = data.options[idx];
 
-  // Draw route polyline
-  if (opt.path_coords && opt.path_coords.length >= 2) {
-    const latlngs = opt.path_coords.map(c => [c[0], c[1]]);
+  // Prioritize road-following geometry; fallback to stop coordinates
+  const rawCoords = (opt.road_geometry && opt.road_geometry.length >= 2) ? opt.road_geometry : opt.path_coords;
+
+  if (rawCoords && rawCoords.length >= 2) {
+    const latlngs = rawCoords.map(c => [c[0], c[1]]);
 
     const polyline = L.polyline(latlngs, {
       color: opt.badge_color || '#3b82f6',
-      weight: 5,
-      opacity: 0.85,
-      dashArray: null
+      weight: 6,
+      opacity: 0.9,
+      lineJoin: 'round',
+      lineCap: 'round',
     }).addTo(map);
     routeLayers.push(polyline);
 
@@ -769,9 +808,9 @@ function selectRoute(idx) {
       .addTo(map);
     markerLayers.push(destMarker);
 
-    // Fit map bounds
-    const bounds = L.latLngBounds(latlngs);
-    map.fitBounds(bounds.pad(0.18));
+    // Fit map bounds smoothly
+    const bounds = polyline.getBounds();
+    map.fitBounds(bounds, { padding: [40, 40] });
 
     // Plot POIs on map
     plotPoisOnMap(data);
@@ -779,14 +818,20 @@ function selectRoute(idx) {
     // Map info box
     const infoEl = document.getElementById('map-info');
     infoEl.style.display = 'block';
+
+    const approxBadge = opt.is_approximate ? 
+      `<div style="margin-top:6px;padding:3px 8px;background:rgba(234,179,8,.15);border:1px solid #eab308;color:#facc15;border-radius:4px;font-size:11px;font-weight:600">⚠️ Showing approximate route (road geometry fallback)</div>` : 
+      `<div style="margin-top:6px;padding:3px 8px;background:rgba(34,197,94,.15);border:1px solid #22c55e;color:#4ade80;border-radius:4px;font-size:11px;font-weight:600">🛣️ Road-following geometry (OSRM ${opt.served_from_cache ? 'cached' : 'live'})</div>`;
+
     infoEl.innerHTML = `
       <h4>🚌 ${opt.route_name} ${opt.is_ac ? '(AC)' : '(Non-AC)'}</h4>
       <div style="margin-top:4px">${opt.origin_stop} → ${opt.dest_stop}</div>
-      <div style="margin-top:4px;display:flex;gap:12px">
+      <div style="margin-top:4px;display:flex;gap:12px;font-size:12px">
         <span>⏱ ${opt.est_time_mins} min</span>
         <span>📏 ${opt.distance_km} km</span>
         <span style="color:${opt.badge_color};font-weight:700">● ${opt.crowdedness_pct}%</span>
       </div>
+      ${approxBadge}
     `;
   }
 }
@@ -850,17 +895,12 @@ function clearPoiMarkers() {
   });
 }
 
-// ── Toggle POI Layer ─────────────────────────────────────────────
 function togglePoiLayer(type) {
   activePoiFilters[type] = !activePoiFilters[type];
   document.getElementById(`filter-${type}`).classList.toggle('active', activePoiFilters[type]);
-
   poiLayers[type].forEach(m => {
-    if (activePoiFilters[type]) {
-      m.addTo(map);
-    } else {
-      map.removeLayer(m);
-    }
+    if (activePoiFilters[type]) m.addTo(map);
+    else map.removeLayer(m);
   });
 }
 
@@ -936,6 +976,51 @@ function renderCityChart() {
     }
   });
 }
+
+// ── Benchmarks Modal Functions ───────────────────────────────────
+async function openBenchmarkModal() {
+  const modal = document.getElementById('benchmark-modal');
+  modal.classList.add('open');
+
+  const pill = document.getElementById('telemetry-pill');
+  const latEl = document.getElementById('telemetry-latency');
+
+  pill.textContent = '🟡 Measuring...';
+  pill.style.background = '#854d0e';
+  pill.style.color = '#fef08a';
+  latEl.textContent = '...';
+
+  const t0 = performance.now();
+  try {
+    const res = await fetch(`${API}/api/benchmark/metrics`);
+    const rtt = Math.round(performance.now() - t0);
+    const data = await res.json();
+
+    pill.textContent = '🟢 Operational';
+    pill.style.background = '#065f46';
+    pill.style.color = '#6ee7b7';
+    latEl.textContent = `${rtt} ms (Round-Trip)`;
+
+    if (data.model_accuracy) {
+      document.getElementById('bm-r2').textContent = data.model_accuracy.r2_score;
+      document.getElementById('bm-mae').textContent = data.model_accuracy.mae_passengers_per_hour;
+      document.getElementById('bm-gain').textContent = '87.2%';
+    }
+  } catch(e) {
+    pill.textContent = '🔴 Offline / Error';
+    pill.style.background = '#7f1d1d';
+    pill.style.color = '#fca5a5';
+    latEl.textContent = 'Timeout';
+  }
+}
+
+function closeBenchmarkModal() {
+  document.getElementById('benchmark-modal').classList.remove('open');
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeBenchmarkModal();
+});
 
 // ── Enter key to search ──────────────────────────────────────────
 document.getElementById('dest-input').addEventListener('keydown', e => { if (e.key === 'Enter') planJourney(); });

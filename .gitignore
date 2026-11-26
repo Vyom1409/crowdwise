@@ -16,3 +16,9 @@ __MACOSX/
 venv/
 ENV/
 env/
+
+# Transient cache temp files
+backend/osrm_cache/*.tmp
+*.tmp
+.pytest_cache/
+

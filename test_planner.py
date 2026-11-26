@@ -1,11 +1,15 @@
 import json
 import time
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DATA_DIR = os.path.join(BASE_DIR, "backend_data")
 
 print("Loading precomputed databases...")
 t0 = time.time()
-with open(r'C:\Users\LENOVO\.gemini\antigravity\scratch\crowdedness-journey-planner\backend_data\routes_db.json', 'r', encoding='utf-8') as f:
+with open(os.path.join(DATA_DIR, "routes_db.json"), 'r', encoding='utf-8') as f:
     routes_db = json.load(f)
-with open(r'C:\Users\LENOVO\.gemini\antigravity\scratch\crowdedness-journey-planner\backend_data\stops_db.json', 'r', encoding='utf-8') as f:
+with open(os.path.join(DATA_DIR, "stops_db.json"), 'r', encoding='utf-8') as f:
     stops_db = json.load(f)
 print(f"Loaded {len(routes_db)} routes and {len(stops_db)} stops in {time.time()-t0:.3f}s")
 
