@@ -66,17 +66,15 @@ flowchart TD
 
 ---
 
-## Quick Start
+## 🚀 Quickstart & Setup
 
-### Startup
-
-#### Option 1: Automated Launcher (Windows)
+### Option 1: Automated Launcher (Windows)
 Double-click **`START.bat`** in the repository root. It will:
 1. Detect Python and install required packages from `requirements.txt`.
 2. Launch the FastAPI server on `http://127.0.0.1:8765`.
 3. Open Google Chrome automatically.
 
-#### Option 2: Manual Terminal Run
+### Option 2: Manual Terminal Run
 ```bash
 # Clone the repository
 git clone https://github.com/Vyom1409/crowdwise.git

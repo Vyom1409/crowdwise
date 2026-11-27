@@ -472,10 +472,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-SRC_DIR = os.path.join(BASE_DIR, "src")
-if os.path.isdir(SRC_DIR):
-    app.mount("/src", StaticFiles(directory=SRC_DIR), name="src")
-
 
 class PlanRequest(BaseModel):
     origin: Any = Field(..., description="Origin stop name, coordinates array [lat, lon], or coordinate string 'lat, lon'")
