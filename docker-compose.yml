@@ -1,0 +1,40 @@
+version: '3.8'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# OSRM Self-Hosted Routing Engine for CrowdWise
+# Provides high-throughput local road geometry & distance matrices without rate limits.
+#
+# QUICKSTART (India / Delhi OSM Extract):
+# 1. Create data directory:
+#      mkdir osrm_data
+# 2. Download extract (Delhi NCR or all-India from Geofabrik):
+#      curl -o osrm_data/delhi-latest.osm.pbf https://download.geofabrik.de/asia/india/northern-zone-latest.osm.pbf
+# 3. Extract road network:
+#      docker run -t -v "%cd%/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/car.lua /data/delhi-latest.osm.pbf
+# 4. Partition cells:
+#      docker run -t -v "%cd%/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/delhi-latest.osrm
+# 5. Customize weights:
+#      docker run -t -v "%cd%/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/delhi-latest.osrm
+# 6. Start the server:
+#      docker compose up -d
+# 7. Configure CrowdWise to use local instance:
+#      set OSRM_BASE_URL=http://localhost:5000
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  osrm:
+    image: ghcr.io/project-osrm/osrm-backend:latest
+    container_name: crowdwise-osrm
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./osrm_data:/data:ro
+    command: osrm-routed --algorithm mld /data/delhi-latest.osrm --max-table-size 1000
+    environment:
+      - OSRM_MAX_TABLE_SIZE=1000
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/nearest/v1/driving/77.2090,28.6139"]
+      interval: 10s
+      timeout: 5s
+      retries: 3

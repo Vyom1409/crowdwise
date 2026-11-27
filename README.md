@@ -6,7 +6,7 @@
 [![Chart.js](https://img.shields.io/badge/Chart.js-4.4-FF6384?style=for-the-badge&logo=chartdotjs&logoColor=white)](https://www.chartjs.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
-**CrowdWise** is an intelligent, crowdedness-aware urban transit journey planner designed specifically for the Delhi Bus Transit Network. Built on analysis of **2,559,899 ticketing records** from the Delhi Open Transit Dataset (October 2026), CrowdWise models passenger density across **1,628 routes** and **6,762 stops** to help commuters choose the most comfortable, least congested journeys.
+**CrowdWise** is an intelligent, crowdedness-aware urban transit journey planner designed specifically for the Delhi Bus Transit Network. Built on analysis of **2,559,899 ticketing records** from the Delhi Open Transit Dataset (October 2026), CrowdWise models passenger density across **1,628 routes** and **6,762 stops**, powered by the **RAPTOR** algorithm and **OSRM** road routing to deliver multi-objective, low-stress transit itineraries.
 
 ---
 
@@ -23,154 +23,143 @@ In Delhi (DTC/DIMTS), where over **4 million passenger trips occur daily**, this
 * **Network-Wide Overload**: Passenger demand concentrates on a few popular corridors while parallel routes run under-capacity.
 
 ### 2. Our Approach
-* **Crowd-First Optimization**: Evaluates journeys on both travel duration ($T$) and crowdedness level ($C$). Users can choose between **Fastest**, **Least Crowded**, or **Balanced**.
-* **Three-Tier Crowd Badges**: Clear visual tags (🟢 Low, 🟡 Medium, 🔴 High) to immediately identify bus comfort.
-* **Smart Departure Shift**: Advises commuters when shifting departure by 15–30 minutes offers a calmer, seated ride.
+* **RAPTOR Transit Routing**: Round-bAsed Public Transit Optimized Router calculates earliest arrival and transfer combinations across all 1,628 Delhi routes in $<30\text{ms}$.
+* **OSRM Road & Walking Legs**: Replaces straight lines with real road curves and walking paths, displaying road distance and duration.
+* **Multi-Criteria Optimization**: Recommends Pareto-optimal journeys with mode choices: **⚡ Fastest**, **⚖️ Balanced**, or **🪑 Least Crowded**.
+* **Step-by-Step Itineraries**: Expandable timeline showing exact board/alight stops, walking segments, transfer junctions, and crowd badges.
 * **Multimodal Integration**: Connects bus routes with 80 Delhi Metro stations, cafes, and hospitals, showing walking minutes, calorie burn, and carbon offset.
-
-### 3. Data We Used
-* **2.56 Million ETM Records**: Electronic ticketing machine data from October 2026 across Delhi buses, used as an empirical boarding demand proxy without expensive IoT sensors.
-* **GTFS Static Transit Feeds**: 1,628 active routes, 6,762 geocoded stops, stop schedules, and route geometries.
-* **POI Geodatabase**: 141 mapped locations (80 Metro stations, 36 cafes, 25 major hospitals) with Haversine distance calculations.
 
 ---
 
 ## ✨ Features
 
-- 🕒 **Crowdedness-Aware Route Planning**: Suggests the optimal bus route and tells you how packed the bus will be at your specific departure hour.
-- 📊 **Hourly Congestion Profiles**: Visualizes hourly crowd levels (Morning Peak, Evening Surge, Midday Dip) with weekday vs. weekend comparisons powered by Chart.js.
-- 🗺️ **Interactive Geographic Map**: Leaflet.js-powered Delhi transit map showing route trajectories, stop markers, and live transit lines.
-- 🚇 **Multimodal POI Integration**: Displays nearest Delhi Metro interchange stations, cafes, and hospitals from any stop with walking minutes and distance estimates.
-- 🚶 **Health & Eco-Tracker**: Calculates walking steps, calories burnt, and kg of CO₂ emissions saved compared to motorized travel.
+- 🧭 **RAPTOR Algorithm (`backend/routing/raptor.py`)**: Vector timetable scanning with transfer relaxation (footpaths $\le 300\text{m}$) and $K$-round Pareto frontier construction.
+- 🛣️ **OSRM Road Navigation (`backend/routing/osrm_client.py`)**: Road-following geometries for bus legs (colored by crowdedness) and dashed lines for walking legs, backed by atomic SHA-256 disk caching in `backend/osrm_cache/`.
+- 📊 **Empirical Crowdedness Models**: Grounded on 2.56M ETM tickets ($R^2 = 0.8981$, $\text{MAE} = 4.50$ passengers/hr, $+65.8\%$ accuracy gain vs static timetables).
+- 🔬 **Algorithmic Benchmarks**: Live comparison of RAPTOR vs Time-Expanded Dijkstra baseline directly in the telemetry modal.
+- 🐳 **Self-Hosted OSRM Support**: Includes `docker-compose.yml` for offline local routing with an India/Delhi OSM extract.
 - ⚡ **One-Click Startup (`START.bat`)**: Fully automated Windows launcher that verifies Python, auto-installs dependencies, dynamically detects the port, and automatically opens the website in Google Chrome.
 
 ---
 
-## 🏛️ System Architecture
+## 🏗️ System Architecture
 
 ```mermaid
 flowchart TD
-    A["Commuter (Browser / Chrome)"] -->|"HTTP / REST API"| B["FastAPI Backend (app.py)"]
-    B --> C["Precomputed Graph Database"]
-    C --> C1["routes_db.json (1,628 Routes)"]
-    C --> C2["stops_db.json (6,762 Stops)"]
-    C --> C3["poi_db.json (Metros, Cafes, Hospitals)"]
-    C --> C4["network_summary.json (2.56M Tickets)"]
-    B -->|"Serves SPA"| D["Frontend (index.html + Leaflet + Chart.js)"]
+    Client["Frontend (index.html)<br>Leaflet.js + Chart.js"]
+    API["FastAPI Backend (app.py)<br>POST /api/plan"]
+    RAPTOR["RAPTOR Transit Router<br>(backend/routing/raptor.py)"]
+    Dijkstra["Dijkstra Baseline<br>(backend/routing/dijkstra_baseline.py)"]
+    OSRM["OSRM Client<br>(backend/routing/osrm_client.py)"]
+    Cache[("Disk Cache<br>backend/osrm_cache/*.json")]
+    Data[("Precomputed DBs<br>routes_db.json / stops_db.json")]
+
+    Client -->|POST /api/plan| API
+    API -->|Query Transit Timetable| RAPTOR
+    RAPTOR -->|Stop Sequences & Trips| Data
+    API -->|Enrich Road & Walking Geometry| OSRM
+    OSRM -->|SHA-256 Check| Cache
+    OSRM -->|Fetch Uncached| RemoteOSRM["OSRM Server (router.project-osrm.org or Docker)"]
+    API -->|Algorithmic Benchmark| Dijkstra
+    API -->|Pareto Journeys + Legs + Road Geometries| Client
 ```
 
 ---
 
-## 📊 Dataset & Analytics Highlights
+## 🚀 Quickstart & Setup
 
-| Metric | Value |
-|---|---|
-| **Total Ticketing Events Analyzed** | 2,559,899 |
-| **Total Network Routes** | 2,259 (1,628 modeled with hourly profiles) |
-| **Total Transit Stops** | 6,762 modeled stops |
-| **Busiest Corridors** | 717A (Badarpur ↔ Nehru Place), 511A, 729, 623, 578 |
-| **Morning Peak Congestion** | 08:00 – 10:00 AM (Peak at 09:00 with 374,218 tickets) |
-| **Evening Peak Congestion** | 17:00 – 20:00 PM (Peak at 18:00 with 254,896 tickets) |
-| **Quietest Travel Window** | 12:00 – 15:00 PM (Midday Dip) & after 20:30 PM |
+### Option 1: Automated Launcher (Windows)
+Double-click **`START.bat`** in the repository root. It will:
+1. Detect Python and install required packages from `requirements.txt`.
+2. Launch the FastAPI server on `http://127.0.0.1:8765`.
+3. Open Google Chrome automatically.
 
----
+### Option 2: Manual Terminal Run
+```bash
+# Clone the repository
+git clone https://github.com/Vyom1409/crowdwise.git
+cd crowdwise
 
-## 🚀 Quick Start Guide
+# Install dependencies
+pip install -r requirements.txt
 
-### Option 1: One-Click Launch (Recommended for Windows)
-
-Simply double-click the included `START.bat` file in the project root:
-
-1. Double-click **`START.bat`**.
-2. The script will:
-   - Auto-detect your Python environment (Python 3.10+).
-   - Check and install required packages (`fastapi`, `uvicorn`).
-   - Detect the configured port (`8765`).
-   - Prevent duplicate server instances.
-   - Start the backend and automatically open the application in **Google Chrome**.
+# Run the server
+python app.py
+```
+Open **`http://127.0.0.1:8765`** in your browser.
 
 ---
 
-### Option 2: Manual Terminal Startup
+## 🐳 Self-Hosting OSRM with Docker Compose
 
-If you prefer running via command line or are on macOS/Linux:
+By default, CrowdWise connects to the public OSRM demo server (`http://router.project-osrm.org`) with local disk caching. To run completely offline or without public rate limits:
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/Vyom1409/crowdwise.git
-   cd crowdwise
-   ```
+```bash
+# 1. Create OSRM data directory
+mkdir osrm_data
 
-2. **Install dependencies**:
-   ```bash
-   pip install fastapi uvicorn
-   ```
+# 2. Download Delhi / Northern India extract from Geofabrik
+curl -o osrm_data/delhi-latest.osm.pbf https://download.geofabrik.de/asia/india/northern-zone-latest.osm.pbf
 
-3. **Start the backend server**:
-   ```bash
-   python app.py
-   ```
+# 3. Extract, partition, and customize the road network
+docker run -t -v "${PWD}/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-extract -p /opt/car.lua /data/delhi-latest.osm.pbf
+docker run -t -v "${PWD}/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-partition /data/delhi-latest.osrm
+docker run -t -v "${PWD}/osrm_data:/data" ghcr.io/project-osrm/osrm-backend osrm-customize /data/delhi-latest.osrm
 
-4. **Open in your browser**:
-   Navigate to [http://127.0.0.1:8765](http://127.0.0.1:8765) in your web browser.
+# 4. Start the local OSRM routing service
+docker compose up -d
 
----
-
-## 🔌 API Endpoints Reference
-
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/` | Serves the single-page web application (`index.html`) |
-| `GET` | `/api/search-stops?q={query}` | Search and autocomplete bus stops by name |
-| `GET` | `/api/plan-journey?from_stop={orig}&to_stop={dest}&hour={h}&is_weekend={bool}` | Plans optimal journey with crowdedness predictions |
-| `GET` | `/api/route-summary?route={route_id}` | Returns route stop list, distance, and 24-hour congestion curve |
-| `GET` | `/api/all-pois` | Returns all mapped Delhi Metros, Cafes, and Hospitals |
-| `GET` | `/api/nearby-poi?lat={lat}&lon={lon}&limit={n}` | Nearest POIs with calculated walking distance and time |
-| `GET` | `/api/walking-calories?distance_km={km}&weight_kg={kg}` | Health calculation: calories burnt, steps, and CO₂ saved |
-| `GET` | `/api/spot-checks` | Returns pre-verified transit verification routes |
-| `GET` | `/api/network-summary` | High-level dataset summary metrics |
-
----
-
-## 📁 Repository Structure
-
-```text
-crowdwise/
-├── START.bat                  # One-click portable Windows launcher
-├── app.py                     # FastAPI backend & API routing
-├── index.html                 # Frontend SPA (Leaflet map, Chart.js, Tailwind styling)
-├── analyze_data.py            # Dataset exploratory analytics script
-├── create_poi_data.py         # POI compiler for Metro, Cafe, and Hospital coordinates
-├── process_data.py            # GTFS & ticketing processor that generated graph DB
-├── test_engine.py             # Route planning algorithm unit test
-├── test_planner.py            # API endpoint integration test
-├── .gitignore                 # Excludes raw heavy CSVs (>100MB) & Python caches
-├── README.md                  # Project documentation & reference
-├── backend_data/
-│   ├── routes_db.json         # 1,628 routes with hourly crowdedness vectors
-│   ├── stops_db.json          # 6,762 stops with lat/lon coordinates
-│   ├── poi_db.json            # 141 Points of Interest (Metro, Cafes, Hospitals)
-│   ├── network_summary.json   # High-level dataset statistics
-│   └── spot_checks.json       # Precomputed test corridors
-└── data/
-    ├── routes.txt             # GTFS Routes definition
-    ├── stops.txt              # GTFS Stops definition
-    ├── stop_times.txt         # GTFS Stop schedules
-    ├── trips.txt              # GTFS Trips catalog
-    └── October-Delhi.csv.zip  # Compressed raw ticketing dataset (<100MB)
+# 5. Point CrowdWise to the local OSRM service
+export OSRM_BASE_URL=http://localhost:5000   # Linux/macOS
+set OSRM_BASE_URL=http://localhost:5000      # Windows CMD
+$env:OSRM_BASE_URL="http://localhost:5000"  # Windows PowerShell
+python app.py
 ```
 
 ---
 
-## 🛠️ Technology Stack
+## 📡 API Reference
 
-- **Backend**: [Python 3.10+](https://www.python.org/) • [FastAPI](https://fastapi.tiangolo.com/) • [Uvicorn](https://www.uvicorn.org/)
-- **Frontend**: HTML5 • Modern CSS3 • JavaScript (ES6+)
-- **Mapping & Charts**: [Leaflet.js](https://leafletjs.com/) • [Chart.js](https://www.chartjs.org/) • [OpenStreetMap](https://www.openstreetmap.org/)
-- **Data Analytics**: NumPy • Pandas • Scikit-Learn • GTFS
+### Plan Journey (RAPTOR + OSRM + Crowd-Aware)
+* **Endpoint**: `POST /api/plan` (also supports `GET /api/plan`)
+* **Request Body**:
+```json
+{
+  "origin": "Badarpur Border",
+  "destination": "Khanpur Extension / Devli Xing",
+  "depart_time": "09:00",
+  "mode": "balanced",
+  "max_transfers": 2,
+  "weekend": false
+}
+```
+* **Modes**:
+  * `fastest`: Minimizes total travel duration.
+  * `least_crowded`: Maximizes seat availability and passenger comfort.
+  * `balanced`: Optimal multi-objective trade-off between time, transfers, and crowdedness.
+* **Response**: Returns a Pareto set of journeys with step-by-step legs (`bus` with road geometry and crowdedness %, `walk` with distance and duration), total duration, transfers count, calorie burn, and nearest POIs.
+
+### Benchmarks & Algorithmic Telemetry
+* **Endpoint**: `GET /api/benchmark/metrics`
+* **Response**: Returns live RAPTOR query time, rounds executed, Pareto frontier count, Dijkstra baseline comparison (query time, nodes settled, edges relaxed), OSRM cache hit rate %, and empirical model validation stats ($R^2$, MAE).
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run RAPTOR toy network unit tests (transfer & crowd-aware trade-offs)
+python test_raptor.py
+
+# Run transit engine and stop matching integration tests
+python test_engine.py
+
+# Run planner sanity test
+python test_planner.py
+```
 
 ---
 
 ## 📄 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
