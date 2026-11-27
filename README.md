@@ -68,10 +68,12 @@ flowchart TD
 
 ## 🚀 Quickstart & Setup
 
+> 🌐 **Direct Website Link (once the server is running):** <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8765</a>
+
 ### Option 1: Automated Launcher (Windows)
 Double-click **`START.bat`** in the repository root. It will:
 1. Detect Python and install required packages from `requirements.txt`.
-2. Launch the FastAPI server on `http://127.0.0.1:8765`.
+2. Launch the FastAPI server on <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8765</a>.
 3. Open Google Chrome automatically.
 
 ### Option 2: Manual Terminal Run
@@ -86,7 +88,9 @@ pip install -r requirements.txt
 # Run the server
 python app.py
 ```
-Open **`http://127.0.0.1:8765`** in your browser.
+Open <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer"><strong>http://127.0.0.1:8765</strong></a> in your browser:
+
+[![Open CrowdWise in Browser](https://img.shields.io/badge/Open_CrowdWise_Website-http%3A%2F%2F127.0.0.1%3A8765-3b82f6?style=for-the-badge&logo=googlechrome&logoColor=white)](http://127.0.0.1:8765)
 
 ---
 
