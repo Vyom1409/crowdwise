@@ -9,7 +9,7 @@ import os
 import math
 import time
 import asyncio
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Tuple
 from pydantic import BaseModel, Field
 from fastapi import FastAPI, Query, HTTPException, Body
 from fastapi.responses import HTMLResponse, FileResponse
@@ -233,6 +233,8 @@ async def execute_journey_planning(
         raise HTTPException(status_code=400, detail=f"No transit stop found matching origin '{origin}'")
     if not dest_stop:
         raise HTTPException(status_code=400, detail=f"No transit stop found matching destination '{destination}'")
+    if orig_stop == dest_stop:
+        raise HTTPException(status_code=400, detail=f"Origin and destination resolved to the same stop ('{orig_stop}'). Please pick two different stops.")
 
     # 2. Determine departure time in minutes from midnight
     if hour is not None and 0 <= hour < 24:
@@ -307,6 +309,7 @@ async def execute_journey_planning(
                             "badge_color": badge_col,
                             "fare": r_info.get("fare", 15.0),
                         }],
+                        "hourly_crowdedness": c_arr,
                         "path_coords": sub_coords,
                     })
 
@@ -375,6 +378,18 @@ async def execute_journey_planning(
             j["route_name"] = " ➔ ".join(l["route_name"] for l in bus_legs)
             j["is_ac"] = any(l.get("is_ac", False) for l in bus_legs)
             j["stops_count"] = sum(l.get("stops_count", 0) for l in bus_legs)
+            if "hourly_crowdedness" not in j:
+                crowd_key = "hourly_crowdedness_weekend" if is_weekend else "hourly_crowdedness_weekday"
+                leg_arrays = [
+                    ROUTES_DB[l["route_id"]].get(crowd_key)
+                    for l in bus_legs
+                    if l.get("route_id") in ROUTES_DB and ROUTES_DB[l["route_id"]].get(crowd_key)
+                ]
+                if leg_arrays:
+                    j["hourly_crowdedness"] = [
+                        round(sum(arr[h] for arr in leg_arrays if len(arr) > h) / len(leg_arrays), 1)
+                        for h in range(24)
+                    ]
         else:
             j["route_id"] = "Walk"
             j["route_name"] = "Walking Route"
@@ -417,6 +432,8 @@ async def execute_journey_planning(
         "origin_coords": orig_coords,
         "destination_coords": dest_coords,
         "depart_time": f"{dep_mins // 60:02d}:{dep_mins % 60:02d}",
+        "hour": (dep_mins // 60) % 24,
+        "is_weekend": is_weekend,
         "mode": mode_clean,
         "preference": mode_clean,
         "router": "RAPTOR (Round-bAsed Public Transit Optimized Router)",
@@ -471,6 +488,37 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+if os.path.isdir(STATIC_DIR):
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
+
+@app.get("/health")
+@app.get("/api/health")
+async def health_check():
+    """
+    Healthcheck endpoint verifying backend status and that transit network and POI databases are fully loaded.
+    """
+    is_network_ready = bool(GLOBAL_NETWORK and GLOBAL_NETWORK.is_built)
+    routes_count = len(ROUTES_DB)
+    stops_count = len(STOPS_DB)
+    pois_count = sum(len(v) for v in POI_DB.values()) if isinstance(POI_DB, dict) else 0
+
+    status_str = "healthy" if (is_network_ready and routes_count > 0 and stops_count > 0) else "degraded"
+
+    return {
+        "status": status_str,
+        "app": "CrowdWise",
+        "version": "2.1.0",
+        "data_loaded": {
+            "network_ready": is_network_ready,
+            "routes_count": routes_count,
+            "stops_count": stops_count,
+            "pois_count": pois_count,
+        },
+        "server_time": time.time(),
+    }
 
 
 class PlanRequest(BaseModel):
@@ -723,4 +771,10 @@ async def api_clear_cache():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8765)
+    port_str = os.environ.get("PORT", "8765")
+    try:
+        port = int(port_str)
+    except ValueError:
+        port = 8765
+    host = os.environ.get("HOST", "127.0.0.1")
+    uvicorn.run(app, host=host, port=port)

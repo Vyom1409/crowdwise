@@ -68,29 +68,47 @@ flowchart TD
 
 ## 🚀 Quickstart & Setup
 
-> 🌐 **Direct Website Link (once the server is running):** <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8765</a>
+Get CrowdWise running in **3 simple steps** with **zero manual configuration**:
 
-### Option 1: Automated Launcher (Windows)
-Double-click **`START.bat`** in the repository root. It will:
-1. Detect Python and install required packages from `requirements.txt`.
-2. Launch the FastAPI server on <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8765</a>.
-3. Open Google Chrome automatically.
+1. **Download or Clone the Repository**:
+   Download the repository ZIP from GitHub and extract it, or run:
+   ```bash
+   git clone https://github.com/Vyom1409/crowdwise.git
+   cd crowdwise
+   ```
 
-### Option 2: Manual Terminal Run
+2. **One-Click Launch for Your Operating System**:
+   - 🪟 **Windows**: Double-click **`START.bat`**
+   - 🍎 **macOS**: Double-click **`start.command`**
+   - 🐧 **Linux**: Run **`./start.sh`** (or `bash start.sh`)
+
+3. **Enjoy!**:
+   The launcher automatically verifies Python 3.10+, creates a local isolated environment (`.venv`), installs dependencies, finds an open port, checks backend health, and opens the website directly in your browser.
+
+> 🌐 **Direct URL once running:** <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer">http://127.0.0.1:8765</a>
+
+---
+
+### 🛠️ Troubleshooting & Common Questions
+
+| Issue | Solution |
+| :--- | :--- |
+| **"Python was not found"** | Install Python 3.10+ from [python.org](https://www.python.org/downloads/). On Windows, ensure **"Add Python to PATH"** is checked. |
+| **Port 8765 is in use** | The launcher automatically searches and binds to the next free port (e.g. `8766`). Or pass `PORT=8800` as an environment variable. |
+| **macOS gatekeeper blocks `start.command`** | Right-click `start.command` and select **Open**, or run `chmod +x start.command` in Terminal. |
+| **Offline / no internet** | CrowdWise comes with vendored Leaflet and Chart.js libraries and cached bus routes. If OSRM road routing is unreachable, it automatically displays straight-line approximate routes with a visible notice. |
+| **Stop the application** | Simply close the terminal/command prompt window that opened during startup. |
+
+---
+
+### 💻 Optional: Manual Terminal Run
 ```bash
-# Clone the repository
-git clone https://github.com/Vyom1409/crowdwise.git
-cd crowdwise
-
-# Install dependencies
+python -m venv .venv
+# Windows: .venv\Scripts\activate | macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-
-# Run the server
 python app.py
 ```
-Open <a href="http://127.0.0.1:8765" target="_blank" rel="noopener noreferrer"><strong>http://127.0.0.1:8765</strong></a> in your browser:
-
-[![Open CrowdWise in Browser](https://img.shields.io/badge/Open_CrowdWise_Website-http%3A%2F%2F127.0.0.1%3A8765-3b82f6?style=for-the-badge&logo=googlechrome&logoColor=white)](http://127.0.0.1:8765)
+Open **`http://127.0.0.1:8765`** in your browser.
 
 ---
 

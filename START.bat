@@ -1,174 +1,127 @@
 @echo off
 setlocal enabledelayedexpansion
-title CrowdWise Delhi Bus Planner - One-Click Launcher
+title CrowdWise - Crowdedness-Aware Journey Planner
 
-:: ============================================================================
-:: 1. Navigate to Project Directory (Portability Guarantee)
-:: ============================================================================
+:: Navigate to script directory
 cd /d "%~dp0"
 
 echo ======================================================================
 echo           CrowdWise - One-Click Application Launcher
 echo ======================================================================
-echo Starting application...
 echo Project directory: %CD%
 echo.
 
-:: ============================================================================
-:: 2. Locate Google Chrome
-:: ============================================================================
-set "CHROME_BIN="
-if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" (
-    set "CHROME_BIN=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
-)
-if not defined CHROME_BIN if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" (
-    set "CHROME_BIN=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
-)
-if not defined CHROME_BIN if exist "%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe" (
-    set "CHROME_BIN=%LOCALAPPDATA%\Google\Chrome\Application\chrome.exe"
-)
-
-:: ============================================================================
-:: 3. Check & Configure Python Environment
-:: ============================================================================
-echo Checking dependencies...
-
+:: 1. Detect Python 3.10+
 set "PY_CMD="
-
-:: Check virtual environment inside project
 if exist "%~dp0.venv\Scripts\python.exe" set "PY_CMD=%~dp0.venv\Scripts\python.exe"
-if not defined PY_CMD if exist "%~dp0venv\Scripts\python.exe" set "PY_CMD=%~dp0venv\Scripts\python.exe"
 
-:: Check known real Python installation paths first
 if not defined PY_CMD (
-    if exist "%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe" (
-        set "PY_CMD=%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe"
+    for %%C in ("%LOCALAPPDATA%\Python\pythoncore-3.14-64\python.exe" py python python3) do (
+        if not defined PY_CMD (
+            %%~C -c "import sys; sys.exit(0 if sys.version_info >= (3, 10) else 1)" >nul 2>&1
+            if !errorlevel! equ 0 set "PY_CMD=%%~C"
+        )
     )
-)
-
-if not defined PY_CMD (
-    for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
-        if not defined PY_CMD if exist "%%D\python.exe" set "PY_CMD=%%D\python.exe"
-    )
-)
-
-if not defined PY_CMD (
-    for /d %%D in ("C:\Python3*") do (
-        if not defined PY_CMD if exist "%%D\python.exe" set "PY_CMD=%%D\python.exe"
-    )
-)
-
-:: Check py launcher and python in PATH
-if not defined PY_CMD (
-    where py >nul 2>&1
-    if !errorlevel! equ 0 set "PY_CMD=py"
-)
-
-if not defined PY_CMD (
-    where python >nul 2>&1
-    if !errorlevel! equ 0 set "PY_CMD=python"
 )
 
 if not defined PY_CMD (
     echo.
     echo ======================================================================
-    echo  [ERROR] Python interpreter was not found on this system!
+    echo  [ERROR] Python 3.10 or higher is required but was not found!
     echo ======================================================================
-    echo  Please install Python 3.10 or higher from https://www.python.org/
-    echo  Ensure Add Python to PATH is checked during installation.
+    echo  Please download and install Python from:
+    echo    https://www.python.org/downloads/
+    echo.
+    echo  IMPORTANT: Check the box "Add Python to PATH" during installation.
+    echo ======================================================================
     echo.
     pause
     exit /b 1
 )
 
-:: ============================================================================
-:: 4. Node.js Project Check (If package.json exists)
-:: ============================================================================
-if exist "package.json" (
-    if not exist "app.py" (
-        where node >nul 2>&1
-        if !errorlevel! neq 0 (
-            echo [ERROR] Node.js is required for this project but was not found.
-            pause
-            exit /b 1
-        )
-        if not exist "node_modules" (
-            echo Installing Node.js dependencies...
-            call npm install
-        )
-        echo Starting Node.js server...
-        start cmd /c "npm start"
+:: 2. Setup virtual environment (.venv) if missing
+if not exist "%~dp0.venv\Scripts\python.exe" (
+    echo Creating Python virtual environment in .venv ...
+    "%PY_CMD%" -m venv "%~dp0.venv"
+    if exist "%~dp0.venv\Scripts\python.exe" (
+        set "PY_CMD=%~dp0.venv\Scripts\python.exe"
+    ) else (
+        echo [WARNING] Could not create .venv; proceeding with system Python.
     )
+) else (
+    set "PY_CMD=%~dp0.venv\Scripts\python.exe"
 )
 
-:: ============================================================================
-:: 5. Verify & Install Python Dependencies
-:: ============================================================================
-"%PY_CMD%" -c "import fastapi, uvicorn, httpx" >nul 2>&1
+:: 3. Install dependencies from requirements.txt if not already installed
+"%PY_CMD%" -c "import fastapi, uvicorn, pydantic, httpx, numpy, pandas, sklearn" >nul 2>&1
 if !errorlevel! neq 0 (
-    echo Required Python libraries missing. Installing fastapi, uvicorn, and httpx...
-    "%PY_CMD%" -m pip install fastapi uvicorn httpx
+    echo Installing requirements from requirements.txt (first run only)
+    "%PY_CMD%" -m pip install -r requirements.txt
     if !errorlevel! neq 0 (
         echo.
         echo ======================================================================
-        echo  [ERROR] Failed to install required packages via pip.
+        echo  [ERROR] Failed to install required packages.
         echo  Please verify your internet connection and retry.
         echo ======================================================================
         pause
         exit /b 1
     )
-    echo Required dependencies installed successfully.
+    echo Dependencies verified successfully.
 )
 
-:: ============================================================================
-:: 6. Detect Port Configured in app.py (Do not assume port number)
-:: ============================================================================
-set "PORT=8765"
-if exist "app.py" (
-    for /f "tokens=*" %%P in ('powershell -NoProfile -ExecutionPolicy Bypass -Command "$c = Get-Content 'app.py' -Raw; if ($c -match 'port\s*=\s*(\d+)') { $Matches[1] } else { '8765' }" 2^>nul') do (
-        if not "%%P"=="" set "PORT=%%P"
-    )
-)
+:: 4. Port Auto-Discovery and Reuse Check
+set "BASE_PORT=8765"
+set "PORT="
 
-:: ============================================================================
-:: 7. Prevent Duplicate Server Instances (Requirement 9)
-:: ============================================================================
-powershell -NoProfile -ExecutionPolicy Bypass -Command "if (Get-NetTCPConnection -LocalPort %PORT% -State Listen -ErrorAction SilentlyContinue) { exit 10 } else { exit 0 }"
+:: Check if server is already running on default port and healthy
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try { $r = Invoke-RestMethod -Uri 'http://127.0.0.1:8765/health' -TimeoutSec 1; if ($r.status -eq 'healthy') { exit 10 } else { exit 0 } } catch { exit 0 }" >nul 2>&1
 if !errorlevel! equ 10 (
-    echo Backend started successfully. [Reusing existing server on port %PORT%]
-    
-    :: Open in Google Chrome
-    if defined CHROME_BIN (
-        start "" "!CHROME_BIN!" "http://127.0.0.1:%PORT%/"
-    ) else (
-        start "" "http://127.0.0.1:%PORT%/"
-    )
-    
-    echo Website opened successfully.
-    echo.
-    echo ======================================================================
-    echo   CrowdWise is open in Chrome at http://127.0.0.1:%PORT%/
-    echo ======================================================================
-    ping 127.0.0.1 -n 4 >nul
+    echo Server is already running and healthy at http://127.0.0.1:8765/
+    start "" "http://127.0.0.1:8765/"
+    echo CrowdWise opened in your default browser.
+    timeout /t 3 >nul
     exit /b 0
 )
 
-:: ============================================================================
-:: 8. Start Background Opener Watcher & Launch Server
-:: ============================================================================
+:: Find an available port starting from 8765
+for /f %%P in ('powershell -NoProfile -ExecutionPolicy Bypass -Command "$p = 8765; while ($p -lt 8800) { if (-not (Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue)) { $p; break }; $p++ }"') do (
+    set "PORT=%%P"
+)
+if not defined PORT set "PORT=8765"
+
+echo Target Port: %PORT%
+set "PORT=%PORT%"
+
+:: 5. Launch Background Browser Opener (waits for /health)
 start /b "" powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$port = '%PORT%';" ^
-    "for ($i = 0; $i -lt 50; $i++) {" ^
-    "    Start-Sleep -Milliseconds 300;" ^
-    "    if (Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue) {" ^
-    "        Write-Host 'Backend started successfully.';" ^
-    "        if ($env:CHROME_BIN) { Start-Process $env:CHROME_BIN \"http://127.0.0.1:$port/\" } else { Start-Process \"http://127.0.0.1:$port/\" };" ^
-    "        Write-Host 'Website opened successfully.';" ^
-    "        break;" ^
-    "    }" ^
+    "$url = \"http://127.0.0.1:$port/\";" ^
+    "$healthUrl = \"http://127.0.0.1:$port/health\";" ^
+    "Write-Host 'Waiting for server to start...';" ^
+    "for ($i = 0; $i -lt 100; $i++) {" ^
+    "    Start-Sleep -Milliseconds 250;" ^
+    "    try {" ^
+    "        $res = Invoke-RestMethod -Uri $healthUrl -TimeoutSec 1;" ^
+    "        if ($res.status -eq 'healthy') {" ^
+    "            Write-Host 'Backend ready. Opening CrowdWise in browser...';" ^
+    "            Start-Process $url;" ^
+    "            break;" ^
+    "        }" ^
+    "    } catch {}" ^
     "}"
 
-:: Start Backend Server
+:: 6. Start CrowdWise Server
+echo.
+echo ======================================================================
+echo   CrowdWise is running at http://127.0.0.1:%PORT%/
+echo   Close this window to stop the application.
+echo ======================================================================
+echo.
+
 "%PY_CMD%" app.py
 
-pause
+if !errorlevel! neq 0 (
+    echo.
+    echo [ERROR] The server stopped with an error code: !errorlevel!
+    pause
+)
